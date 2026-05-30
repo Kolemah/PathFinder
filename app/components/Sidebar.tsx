@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -11,16 +12,20 @@ import {
   Wallet,
   ArrowLeftRight,
   FileText,
+  Users,
   BarChart3,
   Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
+import { useAppContext } from "../context/AppContext";
 
 const links = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { name: "Invoices", href: "/invoices", icon: FileText },
+  { name: "Customers", href: "/customers", icon: Users },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -28,6 +33,11 @@ const links = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { currentUser } = useAppContext();
+  const visibleLinks =
+    currentUser?.role === "Admin"
+      ? [...links, { name: "Admin", href: "/admin", icon: ShieldCheck }]
+      : links;
 
   return (
     <>
@@ -38,7 +48,7 @@ export default function Sidebar() {
       <aside className={open ? "sidebar mobile-open" : "sidebar"}>
         <div className="sidebar-header">
           <div className="brand">
-            <img src="/logo.png" alt="PathFinder" />
+            <Image src="/logo-pathpayx-brand.png" alt="PathPayX" width={170} height={64} />
           </div>
 
           <button className="close-btn" onClick={() => setOpen(false)}>
@@ -47,9 +57,11 @@ export default function Sidebar() {
         </div>
 
         <nav className="sidebar-links">
-          {links.map((link) => {
+          {visibleLinks.map((link) => {
             const Icon = link.icon;
-            const active = pathname === link.href;
+            const active =
+              pathname === link.href ||
+              (link.href === "/admin" && pathname.startsWith("/admin"));
 
             return (
               <Link
@@ -67,8 +79,12 @@ export default function Sidebar() {
 
         <button
           className="sidebar-logout"
-          onClick={() => {
+          onClick={async () => {
+            await fetch("/api/logout", {
+              method: "POST",
+            });
             localStorage.removeItem("pathfinderLoggedIn");
+            localStorage.removeItem("pathfinderUser");
             window.location.href = "/login";
           }}
         >

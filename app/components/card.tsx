@@ -15,14 +15,15 @@ export default function Card({
   return (
     <div
       style={{
-        background: darkMode ? "#0f172a" : "white",
-        color: darkMode ? "white" : "#0f172a",
+        background: darkMode ? "#111827" : "white",
+        color: darkMode ? "white" : "#102033",
         padding: 24,
-        borderRadius: 16,
+        borderRadius: 8,
         width: width || "auto",
+        border: darkMode ? "1px solid #263244" : "1px solid #dbe4ee",
         boxShadow: darkMode
-          ? "0 2px 8px rgba(0,0,0,0.3)"
-          : "0 2px 8px rgba(0,0,0,0.05)",
+          ? "0 14px 34px rgba(0,0,0,0.24)"
+          : "0 14px 34px rgba(16,32,51,0.07)",
       }}
     >
       {children}

@@ -7,12 +7,27 @@ import Button from "./button";
 
 const countries = Country.getAllCountries();
 
+type Invoice = {
+  id: string | number;
+  name: string;
+  gmail: string;
+  country: string;
+  state: string;
+  address: string;
+  zipcode: string;
+  description: string;
+  amount: number;
+  status: string;
+  createdAt?: string;
+  dueDate?: string;
+};
+
 export default function InvoiceForm({
   onCreate,
 }: {
-  onCreate: (invoice: any) => void;
+  onCreate: (invoice: Invoice) => void;
 }) {
-  const { darkMode } = useAppContext();
+  const { darkMode, showToast } = useAppContext();
 
   const [name, setName] = useState("");
   const [gmail, setGmail] = useState("");
@@ -22,6 +37,7 @@ export default function InvoiceForm({
   const [zipcode, setZipcode] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const selectedCountry = countries.find(
     (item) => item.name === country
@@ -31,148 +47,232 @@ export default function InvoiceForm({
     ? State.getStatesOfCountry(selectedCountry.isoCode)
     : [];
 
-  function handleSubmit() {
-    if (
-      !name ||
-      !gmail ||
-      !country ||
-      !state ||
-      !address ||
-      !zipcode ||
-      !description ||
-      !amount
-    ) {
-      alert("Please fill all invoice details");
-      return;
+  async function handleSubmit() {
+    try {
+      if (
+        !name ||
+        !gmail ||
+        !country ||
+        !state ||
+        !address ||
+        !zipcode ||
+        !description ||
+        !amount
+      ) {
+        showToast("Please fill all invoice details", "error");
+        return;
+      }
+
+      const savedUser = localStorage.getItem("pathfinderUser");
+
+      if (!savedUser) {
+        showToast("Please log in again", "error");
+        return;
+      }
+
+      const user = JSON.parse(savedUser);
+
+      setLoading(true);
+
+      const res = await fetch("/api/invoices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          name,
+          gmail,
+          country,
+          state,
+          address,
+          zipcode,
+          description,
+          amount,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.error || "Failed to create invoice", "error");
+        return;
+      }
+
+      onCreate({
+        id: data.invoice.id,
+        name: data.invoice.customer.name,
+        gmail: data.invoice.customer.email,
+        country: data.invoice.customer.country,
+        state: data.invoice.customer.state,
+        address: data.invoice.customer.address,
+        zipcode: data.invoice.customer.zipcode,
+        description: data.invoice.description,
+        amount: data.invoice.amount,
+        status: data.invoice.status,
+        createdAt: data.invoice.createdAt,
+        dueDate: data.invoice.dueDate,
+      });
+
+      setName("");
+      setGmail("");
+      setCountry("");
+      setState("");
+      setAddress("");
+      setZipcode("");
+      setDescription("");
+      setAmount("");
+
+      showToast("Invoice created successfully", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Something went wrong", "error");
+    } finally {
+      setLoading(false);
     }
-
-    onCreate({
-      id: Date.now(),
-      name,
-      gmail,
-      country,
-      state,
-      address,
-      zipcode,
-      description,
-      amount: Number(amount),
-      status: "Pending",
-    });
-
-    setName("");
-    setGmail("");
-    setCountry("");
-    setState("");
-    setAddress("");
-    setZipcode("");
-    setDescription("");
-    setAmount("");
   }
 
   return (
     <div
+      className="invoice-create-panel"
       style={{
-        background: darkMode ? "#0f172a" : "white",
+        background: darkMode ? "#111827" : "white",
         color: darkMode ? "white" : "#0f172a",
-        padding: 24,
-        borderRadius: 16,
-        marginTop: 30,
-        maxWidth: 500,
+        padding: 0,
+        borderRadius: 8,
+        marginTop: 0,
         width: "100%",
-        border: darkMode ? "1px solid #334155" : "none",
+        border: darkMode ? "1px solid #334155" : "1px solid #dbe4ee",
       }}
     >
-      <h2>Create Invoice</h2>
+      <div className="invoice-create-header">
+        <div>
+          <span className="metric-label">Invoice Workspace</span>
+          <h2>Create Invoice</h2>
+          <p className="empty-copy">
+            Build a payable invoice for a client. New invoices are due in 3
+            days by default.
+          </p>
+        </div>
+      </div>
 
-      <input
-        placeholder="Client Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
-
-      <input
-        placeholder="Client Gmail"
-        type="email"
-        value={gmail}
-        onChange={(e) => setGmail(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
-
-      <input
-        list="countries"
-        placeholder="Country"
-        value={country}
-        onChange={(e) => {
-          setCountry(e.target.value);
-          setState("");
-        }}
-        style={inputStyle(darkMode)}
-      />
-
-      <datalist id="countries">
-        {countries.map((countryItem) => (
-          <option
-            key={countryItem.isoCode}
-            value={countryItem.name}
+      <div className="invoice-create-grid">
+        <label>
+          Client Name
+          <input
+            placeholder="Client name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={inputStyle(darkMode)}
           />
-        ))}
-      </datalist>
+        </label>
 
-      <input
-        list="states"
-        placeholder="State"
-        value={state}
-        onChange={(e) => setState(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
-
-      <datalist id="states">
-        {states.map((stateItem) => (
-          <option
-            key={stateItem.isoCode}
-            value={stateItem.name}
+        <label>
+          Client Email
+          <input
+            placeholder="client@example.com"
+            type="email"
+            value={gmail}
+            onChange={(e) => setGmail(e.target.value)}
+            style={inputStyle(darkMode)}
           />
-        ))}
-      </datalist>
+        </label>
 
-      <input
-        placeholder="Address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
+        <label>
+          Country
+          <input
+            list="countries"
+            placeholder="Country"
+            value={country}
+            onChange={(e) => {
+              setCountry(e.target.value);
+              setState("");
+            }}
+            style={inputStyle(darkMode)}
+          />
+        </label>
 
-      <input
-        placeholder="Zip Code"
-        value={zipcode}
-        onChange={(e) => setZipcode(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
-      
-<textarea
-  placeholder="Payment Description (Website Design, Logo Design, FiveM Development...)"
-  value={description}
-  onChange={(e) =>
-    setDescription(e.target.value)
-  }
-  style={{
-    ...inputStyle(darkMode),
-    minHeight: 100,
-    resize: "vertical",
-  }}
-/>
+        <datalist id="countries">
+          {countries.map((countryItem) => (
+            <option
+              key={countryItem.isoCode}
+              value={countryItem.name}
+            />
+          ))}
+        </datalist>
 
-      <input
-        placeholder="Amount"
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        style={inputStyle(darkMode)}
-      />
+        <label>
+          State
+          <input
+            list="states"
+            placeholder="State"
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            style={inputStyle(darkMode)}
+          />
+        </label>
 
-      <div style={{ marginTop: 15 }}>
-        <Button onClick={handleSubmit}>Create Invoice</Button>
+        <datalist id="states">
+          {states.map((stateItem) => (
+            <option
+              key={stateItem.isoCode}
+              value={stateItem.name}
+            />
+          ))}
+        </datalist>
+
+        <label>
+          Address
+          <input
+            placeholder="Street address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            style={inputStyle(darkMode)}
+          />
+        </label>
+
+        <label>
+          Zip Code
+          <input
+            placeholder="Zip code"
+            value={zipcode}
+            onChange={(e) => setZipcode(e.target.value)}
+            style={inputStyle(darkMode)}
+          />
+        </label>
+
+        <label className="invoice-create-description">
+          Payment Description
+          <textarea
+            placeholder="Website design, logo design, FiveM development..."
+            value={description}
+            onChange={(e) =>
+              setDescription(e.target.value)
+            }
+            style={{
+              ...inputStyle(darkMode),
+              minHeight: 110,
+              resize: "vertical",
+            }}
+          />
+        </label>
+
+        <label>
+          Amount
+          <input
+            placeholder="0.00"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            style={inputStyle(darkMode)}
+          />
+        </label>
+      </div>
+
+      <div className="invoice-create-actions">
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Creating..." : "Create Invoice"}
+        </Button>
       </div>
     </div>
   );
@@ -182,11 +282,11 @@ function inputStyle(darkMode: boolean): React.CSSProperties {
   return {
     display: "block",
     width: "100%",
-    padding: 10,
-    marginTop: 12,
+    padding: 12,
+    marginTop: 0,
     borderRadius: 8,
-    border: darkMode ? "1px solid #475569" : "1px solid #ccc",
-    background: darkMode ? "#1e293b" : "white",
+    border: darkMode ? "1px solid #475569" : "1px solid #dbe4ee",
+    background: darkMode ? "#1e293b" : "#f8fafc",
     color: darkMode ? "white" : "#0f172a",
     boxSizing: "border-box",
   };

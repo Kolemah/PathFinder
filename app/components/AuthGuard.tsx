@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+const publicPages = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
+
 export default function AuthGuard({
   children,
 }: {
@@ -12,22 +14,37 @@ export default function AuthGuard({
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
 
-  const publicPages = ["/", "/login", "/register"];
-
   useEffect(() => {
-    const loggedIn = localStorage.getItem("pathfinderLoggedIn");
+    let active = true;
 
-    if (publicPages.includes(pathname)) {
+    async function checkSession() {
+      if (publicPages.includes(pathname)) {
+        setChecking(false);
+        return;
+      }
+
+      const res = await fetch("/api/session");
+
+      if (!active) return;
+
+      if (!res.ok) {
+        localStorage.removeItem("pathfinderLoggedIn");
+        localStorage.removeItem("pathfinderUser");
+        router.replace("/login");
+        return;
+      }
+
       setChecking(false);
-      return;
     }
 
-    if (loggedIn !== "true") {
+    checkSession().catch(() => {
+      if (!active) return;
       router.replace("/login");
-      return;
-    }
+    });
 
-    setChecking(false);
+    return () => {
+      active = false;
+    };
   }, [pathname, router]);
 
   if (checking) {

@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  googleId  String?  @unique
+  role      String   @default("Freelancer")
+  photo     String   @default("")
+  balance   Float    @default(0)
+  darkMode  Boolean  @default(false)
+  emailVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  invoices     Invoice[]
+  transactions Transaction[]
+  customers    Customer[]
+  payouts      Payout[]
+  notifications Notification[]
+  kycVerification KycVerification?
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  country   String
+  state     String
+  address   String
+  zipcode   String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  invoices Invoice[]
+}
+
+model Invoice {
+  id               String    @id @default(cuid())
+  description      String
+  amount           Float
+  status           String    @default("Pending")
+  dueDate          DateTime  @default(now())
+  paidAt           DateTime?
+  paymentAvailableAt DateTime?
+  paymentMethod    String?
+  paymentReference String?
+  paymentStatus    String    @default("Unpaid")
+  checkoutProvider String?
+  platformFeeRate  Float     @default(0.1)
+  platformFeeUsd   Float     @default(0)
+  netAmountUsd     Float     @default(0)
+  netAmountNgn     Float     @default(0)
+  exchangeRate     Float     @default(1393.23)
+  fundsReleasedAt  DateTime?
+  createdAt        DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  type      String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Payout {
+  id          String    @id @default(cuid())
+  amount      Float
+  status      String    @default("Requested")
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  href      String?
+  type      String   @default("system")
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model KycVerification {
+  id             String    @id @default(cuid())
+  provider       String    @default("Smile ID")
+  status         String    @default("Not Submitted")
+  legalName      String
+  dateOfBirth    String
+  phone          String
+  country        String    @default("Nigeria")
+  idType         String
+  idLast4        String
+  providerRef    String?   @unique
+  rejectionReason String?
+  submittedAt    DateTime?
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}

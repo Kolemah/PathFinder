@@ -1,17 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import PageHeader from "../components/PageHeader";
 import Card from "../components/card";
 import Button from "../components/button";
 import { useAppContext } from "../context/AppContext";
 
 export default function SettingsPage() {
-  const { profile, setProfile } = useAppContext();
+  const { profile, setProfile, saveProfile, showToast } = useAppContext();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
+
+    await saveProfile(profile);
+
+    setSaving(false);
     setSaved(true);
+    showToast("Profile updated successfully", "success");
     setTimeout(() => setSaved(false), 2000);
   }
 
@@ -19,53 +27,28 @@ export default function SettingsPage() {
     <div className="page">
       <PageHeader title="Settings" />
 
-      <div style={{ maxWidth: 460, width: "100%" }}>
+      <div className="settings-panel">
         <Card>
           <h2>Profile Settings</h2>
 
-          <div style={{ marginTop: 20 }}>
+          <div className="settings-form">
             {profile.photo ? (
-              <img
+              <Image
                 src={profile.photo}
                 alt="Profile"
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  marginBottom: 15,
-                }}
+                width={100}
+                height={100}
+                unoptimized
+                className="settings-avatar"
               />
             ) : (
-              <div
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: "50%",
-                  background: "#0f172a",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 34,
-                  fontWeight: "bold",
-                  marginBottom: 15,
-                }}
-              >
+              <div className="settings-avatar-placeholder">
                 {profile.name.charAt(0).toUpperCase()}
               </div>
             )}
 
             <label
-              style={{
-                display: "inline-block",
-                padding: "10px 16px",
-                background: "#2563eb",
-                color: "white",
-                borderRadius: 10,
-                cursor: "pointer",
-                marginBottom: 10,
-              }}
+              className="settings-upload-button"
             >
               Change Profile Picture
               <input
@@ -91,7 +74,7 @@ export default function SettingsPage() {
             </label>
 
             {profile.photo && (
-              <div style={{ marginTop: 10, marginBottom: 20 }}>
+              <div className="settings-delete-photo">
                 <Button
                   color="red"
                   onClick={() =>
@@ -106,7 +89,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-            <label>Name</label>
+            <label className="settings-label">Name</label>
             <input
               value={profile.name}
               onChange={(e) =>
@@ -115,7 +98,7 @@ export default function SettingsPage() {
               style={inputStyle}
             />
 
-            <label>Email</label>
+            <label className="settings-label">Email</label>
             <input
               value={profile.email}
               onChange={(e) =>
@@ -124,7 +107,7 @@ export default function SettingsPage() {
               style={inputStyle}
             />
 
-            <label>Role</label>
+            <label className="settings-label">Role</label>
             <input
               value={profile.role}
               onChange={(e) =>
@@ -134,7 +117,9 @@ export default function SettingsPage() {
             />
 
             <div style={{ marginTop: 20 }}>
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
 
             {saved && (
@@ -159,4 +144,6 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   border: "1px solid #ccc",
   boxSizing: "border-box",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };

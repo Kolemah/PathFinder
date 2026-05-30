@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, ArrowLeftRight, Settings } from "lucide-react";
+import { Home, Wallet, ArrowLeftRight, Users, Settings } from "lucide-react";
 
 const links = [
   { name: "Home", href: "/dashboard", icon: Home },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+  { name: "Customers", href: "/customers", icon: Users },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -26,7 +27,8 @@ export default function BottomNav() {
             href={link.href}
             className="bottom-nav-link"
             style={{
-              color: active ? "#2563eb" : "#64748b",
+              color: active ? "#0f766e" : "#607089",
+              background: active ? "#ccfbf1" : "transparent",
               textDecoration: "none",
             }}
           >

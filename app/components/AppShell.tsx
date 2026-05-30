@@ -15,8 +15,8 @@ export default function AppShell({
     <div
     className="app-main"
       style={{
-        background: darkMode ? "#020617" : "#f1f5f9",
-        color: darkMode ? "white" : "#0f172a",
+        background: darkMode ? "#020617" : undefined,
+        color: darkMode ? "white" : "#102033",
       }}
     >
       <Topbar />

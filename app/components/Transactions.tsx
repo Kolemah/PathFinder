@@ -1,9 +1,10 @@
 "use client";
 
 import { useAppContext } from "../context/AppContext";
+import { formatNaira, formatUsd } from "@/lib/wallet";
 
 type Transaction = {
-  id: number;
+  id: string | number;
   type: string;
   amount: number;
 };
@@ -14,6 +15,14 @@ export default function Transactions({
   transactions: Transaction[];
 }) {
   const { darkMode } = useAppContext();
+
+  function transactionAmount(transaction: Transaction) {
+    if (transaction.type.toLowerCase().includes("pending")) {
+      return formatUsd(Number(transaction.amount));
+    }
+
+    return formatNaira(Number(transaction.amount));
+  }
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -35,7 +44,7 @@ export default function Transactions({
             }}
           >
             <span>{transaction.type}</span>
-            <span>${transaction.amount}</span>
+            <span>{transactionAmount(transaction)}</span>
           </div>
         ))}
       </div>
