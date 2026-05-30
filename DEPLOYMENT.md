@@ -91,6 +91,12 @@ The payment release cron is configured in `vercel.json`:
 /api/cron/release-payments
 ```
 
+On Vercel Hobby, the cron is set to run once per day:
+
+```txt
+0 0 * * *
+```
+
 Set `CRON_SECRET` in Vercel so the endpoint can protect automated payment release.
 
 ## Before Deploying
