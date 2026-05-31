@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import {
+  getPasswordChecks,
   passwordPolicyMessage,
   validatePasswordPolicy,
 } from "@/lib/password-policy";
@@ -23,6 +24,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const passwordChecks = getPasswordChecks(password);
+  const passwordStrength = Object.values(passwordChecks).filter(Boolean).length;
 
   async function handleRegister() {
     try {
@@ -176,10 +179,34 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        <p className="auth-helper-text">
-          Use more than 8 characters with uppercase, lowercase, number, and
-          special character.
-        </p>
+        <div className="password-checker" aria-live="polite">
+          <div className="password-strength-track">
+            <span style={{ width: `${(passwordStrength / 5) * 100}%` }} />
+          </div>
+
+          <ul>
+            <li className={passwordChecks.length ? "valid" : "invalid"}>
+              <span>{passwordChecks.length ? "✓" : "!"}</span>
+              More than 8 characters
+            </li>
+            <li className={passwordChecks.lower ? "valid" : "invalid"}>
+              <span>{passwordChecks.lower ? "✓" : "!"}</span>
+              Lowercase letter
+            </li>
+            <li className={passwordChecks.upper ? "valid" : "invalid"}>
+              <span>{passwordChecks.upper ? "✓" : "!"}</span>
+              Uppercase letter
+            </li>
+            <li className={passwordChecks.number ? "valid" : "invalid"}>
+              <span>{passwordChecks.number ? "✓" : "!"}</span>
+              Number (0-9)
+            </li>
+            <li className={passwordChecks.special ? "valid" : "invalid"}>
+              <span>{passwordChecks.special ? "✓" : "!"}</span>
+              Special character (!@#$%)
+            </li>
+          </ul>
+        </div>
 
         <label>Confirm password</label>
 
