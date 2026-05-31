@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
     const verificationLink = `${getAppUrl()}/api/verify-email?token=${verificationToken}`;
 
-    sendEmail({
+    await sendEmail({
       to: user.email,
       subject: "Welcome to PathPayX - verify your email",
       html: welcomeEmailTemplate({
