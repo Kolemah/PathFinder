@@ -35,6 +35,10 @@ const brand = {
   danger: "#dc2626",
 };
 
+function appUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL || "https://www.pathpayx.com";
+}
+
 function escapeHtml(value = "") {
   return value
     .replaceAll("&", "&amp;")
@@ -71,9 +75,18 @@ function layout({
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid ${brand.border};border-radius:14px;overflow:hidden;">
             <tr>
               <td style="padding:28px 28px 16px;">
-                <div style="font-size:24px;font-weight:900;color:${brand.green};letter-spacing:0;">
-                  PathPayX
-                </div>
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding-right:12px;vertical-align:middle;">
+                      <img src="${escapeHtml(appUrl())}/pathpayx-icon.png" width="42" height="42" alt="PathPayX" style="display:block;border-radius:10px;" />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <div style="font-size:24px;font-weight:900;color:${brand.green};letter-spacing:0;">
+                        PathPayX
+                      </div>
+                    </td>
+                  </tr>
+                </table>
                 <div style="margin-top:6px;color:${brand.muted};font-size:13px;">
                   Invoice globally. Receive payments worldwide. Withdraw in naira.
                 </div>
