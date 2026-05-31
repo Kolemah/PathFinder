@@ -1887,6 +1887,28 @@ padding-bottom:92px;
   font-weight: 700;
 }
 
+.required-mark {
+  color: var(--danger);
+}
+
+.amount-input-wrap {
+  position: relative;
+}
+
+.amount-input-wrap > span {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 1;
+  color: var(--muted);
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.amount-input-wrap input {
+  padding-left: 32px !important;
+}
+
 .invoice-create-description {
   grid-column: 1 / -1;
 }

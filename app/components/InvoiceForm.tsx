@@ -6,6 +6,7 @@ import { useAppContext } from "../context/AppContext";
 import Button from "./button";
 
 const countries = Country.getAllCountries();
+const requiredMark = <span className="required-mark">*</span>;
 
 type Invoice = {
   id: string | number;
@@ -174,28 +175,30 @@ export default function InvoiceForm({
 
       <div className="invoice-create-grid">
         <label>
-          Client Name
+          <span>Client Name {requiredMark}</span>
           <input
             placeholder="Client name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             style={inputStyle(darkMode)}
+            required
           />
         </label>
 
         <label>
-          Client Email
+          <span>Client Email {requiredMark}</span>
           <input
             placeholder="client@example.com"
             type="email"
             value={gmail}
             onChange={(e) => setGmail(e.target.value)}
             style={inputStyle(darkMode)}
+            required
           />
         </label>
 
         <label>
-          Country
+          <span>Country {requiredMark}</span>
           <select
             value={country}
             onChange={(e) => {
@@ -203,6 +206,7 @@ export default function InvoiceForm({
               setState("");
             }}
             style={inputStyle(darkMode)}
+            required
           >
             <option value="">Select country</option>
             {countries.map((countryItem) => (
@@ -217,12 +221,13 @@ export default function InvoiceForm({
         </label>
 
         <label>
-          State
+          <span>State {requiredMark}</span>
           <select
             value={state}
             onChange={(e) => setState(e.target.value)}
             style={inputStyle(darkMode)}
             disabled={!country}
+            required
           >
             <option value="">
               {country ? "Select state" : "Select country first"}
@@ -239,33 +244,36 @@ export default function InvoiceForm({
         </label>
 
         <label>
-          Address
+          <span>Address {requiredMark}</span>
           <input
             placeholder="Street address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             style={inputStyle(darkMode)}
+            required
           />
         </label>
 
         <label>
-          Zip Code
+          <span>Zip Code {requiredMark}</span>
           <input
             placeholder="Zip code"
             value={zipcode}
             onChange={(e) => setZipcode(e.target.value)}
             style={inputStyle(darkMode)}
+            required
           />
         </label>
 
         <label className="invoice-create-description">
-          Payment Description
+          <span>Payment Description {requiredMark}</span>
           <textarea
             placeholder="Website design, logo design, FiveM development..."
             value={description}
             onChange={(e) =>
               setDescription(e.target.value)
             }
+            required
             style={{
               ...inputStyle(darkMode),
               minHeight: 110,
@@ -275,14 +283,20 @@ export default function InvoiceForm({
         </label>
 
         <label>
-          Amount
-          <input
-            placeholder="0.00"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            style={inputStyle(darkMode)}
-          />
+          <span>Amount (USD) {requiredMark}</span>
+          <div className="amount-input-wrap">
+            <span>$</span>
+            <input
+              placeholder="0.00"
+              type="number"
+              min="1"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              style={inputStyle(darkMode)}
+              required
+            />
+          </div>
         </label>
       </div>
 

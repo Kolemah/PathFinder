@@ -184,6 +184,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+      return Response.json(
+        { error: "Amount must be a valid dollar amount." },
+        { status: 400 }
+      );
+    }
+
     const customer = await prisma.customer.create({
       data: {
         name,
