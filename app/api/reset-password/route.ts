@@ -1,5 +1,9 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import {
+  passwordPolicyMessage,
+  validatePasswordPolicy,
+} from "@/lib/password-policy";
 
 export async function POST(req: Request) {
   try {
@@ -12,9 +16,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (password.length < 6) {
+    if (!validatePasswordPolicy(password)) {
       return Response.json(
-        { error: "Password must be at least 6 characters" },
+        { error: passwordPolicyMessage },
         { status: 400 }
       );
     }

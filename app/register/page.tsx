@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAppContext } from "../context/AppContext";
+import {
+  passwordPolicyMessage,
+  validatePasswordPolicy,
+} from "@/lib/password-policy";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -26,6 +30,11 @@ export default function RegisterPage() {
 
       if (password !== confirm) {
         showToast("Passwords do not match", "error");
+        return;
+      }
+
+      if (!validatePasswordPolicy(password)) {
+        showToast(passwordPolicyMessage, "error");
         return;
       }
 
@@ -154,6 +163,11 @@ export default function RegisterPage() {
             setPassword(e.target.value)
           }
         />
+
+        <p className="auth-helper-text">
+          Use more than 8 characters with uppercase, lowercase, number, and
+          special character.
+        </p>
 
         <label>Confirm password</label>
 

@@ -27,7 +27,7 @@ export default function InvoiceForm({
 }: {
   onCreate: (invoice: Invoice) => void;
 }) {
-  const { darkMode, showToast } = useAppContext();
+  const { currentUser, darkMode, showToast } = useAppContext();
 
   const [name, setName] = useState("");
   const [gmail, setGmail] = useState("");
@@ -49,6 +49,11 @@ export default function InvoiceForm({
 
   async function handleSubmit() {
     try {
+      if (currentUser && !currentUser.emailVerified) {
+        showToast("Please verify your email before creating invoices", "error");
+        return;
+      }
+
       if (
         !name ||
         !gmail ||
@@ -71,6 +76,11 @@ export default function InvoiceForm({
       }
 
       const user = JSON.parse(savedUser);
+
+      if (!user.emailVerified) {
+        showToast("Please verify your email before creating invoices", "error");
+        return;
+      }
 
       setLoading(true);
 
@@ -155,6 +165,12 @@ export default function InvoiceForm({
           </p>
         </div>
       </div>
+
+      {currentUser && !currentUser.emailVerified ? (
+        <div className="auth-notice auth-notice-error invoice-email-lock">
+          Verify your email address before creating invoices.
+        </div>
+      ) : null}
 
       <div className="invoice-create-grid">
         <label>
@@ -270,7 +286,10 @@ export default function InvoiceForm({
       </div>
 
       <div className="invoice-create-actions">
-        <Button onClick={handleSubmit} disabled={loading}>
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || Boolean(currentUser && !currentUser.emailVerified)}
+        >
           {loading ? "Creating..." : "Create Invoice"}
         </Button>
       </div>

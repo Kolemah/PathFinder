@@ -3,6 +3,10 @@ import { setSessionCookie } from "@/lib/session";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { welcomeEmailTemplate } from "@/lib/email-templates";
 import { createEmailToken, tokenExpiry } from "@/lib/email-tokens";
+import {
+  passwordPolicyMessage,
+  validatePasswordPolicy,
+} from "@/lib/password-policy";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -15,6 +19,13 @@ export async function POST(req: Request) {
     if (!name || !email || !password) {
       return Response.json(
         { error: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!validatePasswordPolicy(password)) {
+      return Response.json(
+        { error: passwordPolicyMessage },
         { status: 400 }
       );
     }

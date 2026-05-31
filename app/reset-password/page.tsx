@@ -6,6 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useState } from "react";
 import { useAppContext } from "../context/AppContext";
+import {
+  passwordPolicyMessage,
+  validatePasswordPolicy,
+} from "@/lib/password-policy";
 
 function ResetPasswordForm() {
   const { showToast } = useAppContext();
@@ -24,6 +28,11 @@ function ResetPasswordForm() {
 
     if (!password || password !== confirm) {
       showToast("Passwords do not match", "error");
+      return;
+    }
+
+    if (!validatePasswordPolicy(password)) {
+      showToast(passwordPolicyMessage, "error");
       return;
     }
 
@@ -77,6 +86,11 @@ function ResetPasswordForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
+
+        <p className="auth-helper-text">
+          Use more than 8 characters with uppercase, lowercase, number, and
+          special character.
+        </p>
 
         <label>Confirm password</label>
         <input

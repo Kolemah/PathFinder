@@ -21,6 +21,19 @@ function paymentReference(invoiceId: string) {
   return `MANUAL-${invoiceId.slice(-8).toUpperCase()}-${Date.now()}`;
 }
 
+async function requireVerifiedEmail(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      emailVerified: true,
+    },
+  });
+
+  return Boolean(user?.emailVerified);
+}
+
 export async function GET(req: Request) {
   try {
     const sessionUserId = await getSessionUserIdFromCookies();
@@ -91,6 +104,13 @@ export async function POST(req: Request) {
 
       if (userId !== sessionUserId) return forbiddenResponse();
 
+      if (!(await requireVerifiedEmail(userId))) {
+        return Response.json(
+          { error: "Please verify your email before renewing invoices." },
+          { status: 403 }
+        );
+      }
+
       const sourceInvoice = await prisma.invoice.findFirst({
         where: {
           id: sourceInvoiceId,
@@ -156,6 +176,13 @@ export async function POST(req: Request) {
     }
 
     if (userId !== sessionUserId) return forbiddenResponse();
+
+    if (!(await requireVerifiedEmail(userId))) {
+      return Response.json(
+        { error: "Please verify your email before creating invoices." },
+        { status: 403 }
+      );
+    }
 
     const customer = await prisma.customer.create({
       data: {

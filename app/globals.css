@@ -1340,6 +1340,19 @@ padding-bottom:92px;
   width: 100%;
 }
 
+.auth-helper-text {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 8px 0 16px;
+  text-align: left;
+}
+
+.invoice-email-lock {
+  margin: 0 24px 18px;
+  max-width: none;
+}
+
 .auth-page h1 {
   margin: 0;
   font-size: 30px;
