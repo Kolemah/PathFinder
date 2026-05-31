@@ -61,20 +61,46 @@ export async function POST(req: Request) {
 
     const verificationLink = `${getAppUrl()}/api/verify-email?token=${verificationToken}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Welcome to PathPayX - verify your email",
-      html: welcomeEmailTemplate({
-        name: user.name,
-        actionUrl: verificationLink,
-      }),
-    }).catch((error) => {
+    let emailStatus:
+      | { sent: true; id?: string }
+      | { sent: false; error: string };
+
+    try {
+      const emailResult = await sendEmail({
+        to: user.email,
+        subject: "Welcome to PathPayX - verify your email",
+        html: welcomeEmailTemplate({
+          name: user.name,
+          actionUrl: verificationLink,
+        }),
+      });
+
+      emailStatus = {
+        sent: true,
+        id:
+          typeof emailResult === "object" &&
+          emailResult !== null &&
+          "id" in emailResult &&
+          typeof emailResult.id === "string"
+            ? emailResult.id
+            : undefined,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send verification email";
+
       console.log("WELCOME EMAIL ERROR:", error);
-    });
+
+      emailStatus = {
+        sent: false,
+        error: message,
+      };
+    }
 
     const response = NextResponse.json({
       message: "Account created successfully. Check your email to verify your account.",
       user,
+      emailStatus,
     });
 
     setSessionCookie(response, user.id);
