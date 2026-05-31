@@ -196,46 +196,47 @@ export default function InvoiceForm({
 
         <label>
           Country
-          <input
-            list="countries"
-            placeholder="Country"
+          <select
             value={country}
             onChange={(e) => {
               setCountry(e.target.value);
               setState("");
             }}
             style={inputStyle(darkMode)}
-          />
+          >
+            <option value="">Select country</option>
+            {countries.map((countryItem) => (
+              <option
+                key={countryItem.isoCode}
+                value={countryItem.name}
+              >
+                {countryItem.name}
+              </option>
+            ))}
+          </select>
         </label>
-
-        <datalist id="countries">
-          {countries.map((countryItem) => (
-            <option
-              key={countryItem.isoCode}
-              value={countryItem.name}
-            />
-          ))}
-        </datalist>
 
         <label>
           State
-          <input
-            list="states"
-            placeholder="State"
+          <select
             value={state}
             onChange={(e) => setState(e.target.value)}
             style={inputStyle(darkMode)}
-          />
+            disabled={!country}
+          >
+            <option value="">
+              {country ? "Select state" : "Select country first"}
+            </option>
+            {states.map((stateItem) => (
+              <option
+                key={stateItem.isoCode}
+                value={stateItem.name}
+              >
+                {stateItem.name}
+              </option>
+            ))}
+          </select>
         </label>
-
-        <datalist id="states">
-          {states.map((stateItem) => (
-            <option
-              key={stateItem.isoCode}
-              value={stateItem.name}
-            />
-          ))}
-        </datalist>
 
         <label>
           Address
@@ -308,5 +309,6 @@ function inputStyle(darkMode: boolean): React.CSSProperties {
     background: darkMode ? "#1e293b" : "#f8fafc",
     color: darkMode ? "white" : "#0f172a",
     boxSizing: "border-box",
+    minHeight: 48,
   };
 }

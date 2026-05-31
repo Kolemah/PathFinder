@@ -1897,6 +1897,10 @@ padding-bottom:92px;
   padding: 0 24px 24px;
 }
 
+.invoice-create-actions button {
+  min-height: 48px;
+}
+
 /* WALLET */
 
 .wallet-rate {
@@ -3023,11 +3027,12 @@ padding-bottom:92px;
 
 .invoice-modal-backdrop {
   align-items: flex-start;
-  padding: 12px;
+  padding: 10px;
 }
 
 .invoice-modal {
-  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 20px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .invoice-empty {
@@ -3097,7 +3102,12 @@ padding-bottom:92px;
 }
 
 .invoice-create-actions {
-  padding: 0 18px 20px;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+  background: inherit;
+  border-top: 1px solid var(--border);
 }
 
 .invoice-create-actions button {
