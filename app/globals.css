@@ -1406,6 +1406,35 @@ padding-bottom:92px;
   box-sizing: border-box;
 }
 
+.auth-password-field {
+  position: relative;
+}
+
+.auth-password-field input {
+  padding-right: 48px;
+}
+
+.auth-password-field button {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.auth-password-field button:hover {
+  color: var(--brand);
+}
+
 .auth-btn {
   width: 100%;
   margin-top: 28px;

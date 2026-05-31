@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import {
   passwordPolicyMessage,
@@ -19,6 +20,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
@@ -155,14 +158,23 @@ export default function RegisterPage() {
 
         <label>Create password</label>
 
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-        />
+        <div className="auth-password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+          />
+          <button
+            type="button"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            onClick={() => setShowPassword((value) => !value)}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
 
         <p className="auth-helper-text">
           Use more than 8 characters with uppercase, lowercase, number, and
@@ -171,14 +183,23 @@ export default function RegisterPage() {
 
         <label>Confirm password</label>
 
-        <input
-          type="password"
-          placeholder="Confirm your password"
-          value={confirm}
-          onChange={(e) =>
-            setConfirm(e.target.value)
-          }
-        />
+        <div className="auth-password-field">
+          <input
+            type={showConfirm ? "text" : "password"}
+            placeholder="Confirm your password"
+            value={confirm}
+            onChange={(e) =>
+              setConfirm(e.target.value)
+            }
+          />
+          <button
+            type="button"
+            aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+            onClick={() => setShowConfirm((value) => !value)}
+          >
+            {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
 
         <button
           className="auth-btn"
