@@ -12,6 +12,7 @@ type AdminUser = {
   name: string;
   email: string;
   role: string;
+  accountStatus: string;
   balance: number;
   createdAt: string;
   kycStatus: string;
@@ -82,6 +83,7 @@ export default function AdminPage() {
         user.name.toLowerCase().includes(normalizedSearch) ||
         user.email.toLowerCase().includes(normalizedSearch) ||
         user.role.toLowerCase().includes(normalizedSearch) ||
+        user.accountStatus.toLowerCase().includes(normalizedSearch) ||
         user.kycStatus.toLowerCase().includes(normalizedSearch)
     );
   }, [search, users]);
@@ -175,6 +177,11 @@ export default function AdminPage() {
                     <div>
                       <span>Pending</span>
                       <strong>{formatUsd(Number(user.pendingUsd))}</strong>
+                    </div>
+
+                    <div>
+                      <span>Account</span>
+                      <strong>{user.accountStatus}</strong>
                     </div>
 
                     <div>

@@ -7,6 +7,12 @@ import {
 import { sendEmail } from "@/lib/email";
 import { payoutRequestedTemplate } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/wallet";
+import {
+  isRestrictedAccount,
+  isTerminatedAccount,
+  restrictedAccountMessage,
+  terminatedAccountMessage,
+} from "@/lib/account-status";
 
 const MINIMUM_PAYOUT_NGN = 10000;
 
@@ -73,6 +79,7 @@ export async function POST(req: Request) {
         name: true,
         email: true,
         balance: true,
+        accountStatus: true,
         kycVerification: {
           select: {
             status: true,
@@ -85,6 +92,20 @@ export async function POST(req: Request) {
       return Response.json(
         { error: "User not found" },
         { status: 404 }
+      );
+    }
+
+    if (isTerminatedAccount(user.accountStatus)) {
+      return Response.json(
+        { error: terminatedAccountMessage },
+        { status: 403 }
+      );
+    }
+
+    if (isRestrictedAccount(user.accountStatus)) {
+      return Response.json(
+        { error: restrictedAccountMessage("payout") },
+        { status: 403 }
       );
     }
 
@@ -165,6 +186,7 @@ export async function POST(req: Request) {
           role: true,
           photo: true,
           balance: true,
+          accountStatus: true,
         },
       });
 

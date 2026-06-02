@@ -77,9 +77,22 @@ export default function WalletPage() {
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
   const recentWalletActivity = transactions.slice(0, 8);
+  const accountRestricted = currentUser?.accountStatus === "Restricted";
 
   async function requestPayout() {
     if (!currentUser || requestingPayout) return;
+
+    if (accountRestricted) {
+      addNotification(
+        "Your account is restricted. You cannot request payouts at this time.",
+        "error",
+        {
+          href: "/wallet",
+          notificationType: "wallet",
+        }
+      );
+      return;
+    }
 
     const payoutAmount = Number(balance);
 
@@ -167,10 +180,21 @@ export default function WalletPage() {
           <span>Available Balance</span>
           <strong>{formatNaira(Number(balance))}</strong>
           <p>Cleared naira balance ready for withdrawal.</p>
-          <Button onClick={requestPayout} disabled={requestingPayout}>
-            {requestingPayout ? "Requesting..." : "Request payout"}
+          <Button
+            onClick={requestPayout}
+            disabled={requestingPayout || accountRestricted}
+          >
+            {accountRestricted
+              ? "Account restricted"
+              : requestingPayout
+                ? "Requesting..."
+                : "Request payout"}
           </Button>
-          <small>Minimum payout is NGN 10,000.</small>
+          <small>
+            {accountRestricted
+              ? "Payout is locked until admin removes the restriction."
+              : "Minimum payout is NGN 10,000."}
+          </small>
         </div>
 
         <div className="wallet-stat-card wallet-stat-pending">

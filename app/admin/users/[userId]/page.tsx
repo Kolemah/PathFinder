@@ -41,6 +41,7 @@ type AdminUserDetail = {
   name: string;
   email: string;
   role: string;
+  accountStatus: string;
   balance: number;
   createdAt: string;
   kycVerification: {
@@ -80,7 +81,11 @@ export default function AdminUserPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  async function updateUser(body: { role?: string; kycStatus?: string }) {
+  async function updateUser(body: {
+    role?: string;
+    kycStatus?: string;
+    accountStatus?: string;
+  }) {
     if (saving) return;
 
     setSaving(true);
@@ -220,6 +225,24 @@ export default function AdminUserPage() {
                     <option value="Admin">Admin</option>
                   </select>
                 </label>
+                <label>
+                  <span>Account Status</span>
+                  <select
+                    value={user.accountStatus}
+                    disabled={saving}
+                    onChange={(event) =>
+                      updateUser({ accountStatus: event.target.value })
+                    }
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Restricted">Restricted</option>
+                    <option value="Terminated">Terminated</option>
+                  </select>
+                </label>
+                <p className="metric-note">
+                  Restricted users can log in but cannot create invoices or
+                  request payouts. Terminated users cannot log in.
+                </p>
               </div>
             </Card>
 

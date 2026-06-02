@@ -4,6 +4,7 @@ import { kycStatusTemplate } from "@/lib/email-templates";
 import { prisma } from "@/lib/prisma";
 import { releaseMaturedPayments } from "@/lib/wallet-release";
 import { PAYMENT_STATUS_PENDING_CLEARANCE } from "@/lib/wallet";
+import { accountStatusOptions } from "@/lib/account-status";
 
 function sum(items: { amount: number }[]) {
   return items.reduce((total, item) => total + Number(item.amount), 0);
@@ -60,6 +61,7 @@ function formatUser(user: NonNullable<Awaited<ReturnType<typeof loadUser>>>) {
     name: user.name,
     email: user.email,
     role: user.role,
+    accountStatus: user.accountStatus,
     photo: user.photo,
     balance: user.balance,
     createdAt: user.createdAt,
@@ -123,7 +125,7 @@ export async function PATCH(
 
     const { userId } = await params;
     const body = await req.json();
-    const { role, kycStatus } = body;
+    const { role, kycStatus, accountStatus } = body;
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -150,6 +152,24 @@ export async function PATCH(
         },
         data: {
           role,
+        },
+      });
+    }
+
+    if (accountStatus !== undefined) {
+      if (!accountStatusOptions.includes(accountStatus)) {
+        return Response.json(
+          { error: "Invalid account status" },
+          { status: 400 }
+        );
+      }
+
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          accountStatus,
         },
       });
     }

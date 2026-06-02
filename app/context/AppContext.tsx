@@ -67,6 +67,7 @@ type LoggedInUser = {
   balance?: number;
   darkMode?: boolean;
   emailVerified?: boolean;
+  accountStatus?: string;
 };
 
 type AppContextType = {

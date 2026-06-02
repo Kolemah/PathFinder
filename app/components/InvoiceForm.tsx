@@ -47,11 +47,20 @@ export default function InvoiceForm({
   const states = selectedCountry
     ? State.getStatesOfCountry(selectedCountry.isoCode)
     : [];
+  const accountRestricted = currentUser?.accountStatus === "Restricted";
 
   async function handleSubmit() {
     try {
       if (currentUser && !currentUser.emailVerified) {
         showToast("Please verify your email before creating invoices", "error");
+        return;
+      }
+
+      if (accountRestricted) {
+        showToast(
+          "Your account is restricted. You cannot create invoices at this time.",
+          "error"
+        );
         return;
       }
 
@@ -170,6 +179,12 @@ export default function InvoiceForm({
       {currentUser && !currentUser.emailVerified ? (
         <div className="auth-notice auth-notice-error invoice-email-lock">
           Verify your email address before creating invoices.
+        </div>
+      ) : null}
+
+      {accountRestricted ? (
+        <div className="auth-notice auth-notice-error invoice-email-lock">
+          Your account is restricted. You cannot create invoices at this time.
         </div>
       ) : null}
 
@@ -303,7 +318,11 @@ export default function InvoiceForm({
       <div className="invoice-create-actions">
         <Button
           onClick={handleSubmit}
-          disabled={loading || Boolean(currentUser && !currentUser.emailVerified)}
+          disabled={
+            loading ||
+            accountRestricted ||
+            Boolean(currentUser && !currentUser.emailVerified)
+          }
         >
           {loading ? "Creating..." : "Create Invoice"}
         </Button>

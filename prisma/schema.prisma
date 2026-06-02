@@ -17,6 +17,7 @@ model User {
   balance   Float    @default(0)
   darkMode  Boolean  @default(false)
   emailVerified Boolean @default(false)
+  accountStatus String @default("Active")
   createdAt DateTime @default(now())
 
   invoices     Invoice[]

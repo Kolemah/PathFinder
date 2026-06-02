@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { setSessionCookie } from "@/lib/session";
+import {
+  isTerminatedAccount,
+  terminatedAccountMessage,
+} from "@/lib/account-status";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -38,6 +42,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (isTerminatedAccount(user.accountStatus)) {
+      return Response.json(
+        { error: terminatedAccountMessage },
+        { status: 403 }
+      );
+    }
+
     const response = NextResponse.json({
       message: "Login successful",
       user: {
@@ -49,6 +60,7 @@ export async function POST(req: Request) {
         balance: user.balance,
         darkMode: user.darkMode,
         emailVerified: user.emailVerified,
+        accountStatus: user.accountStatus,
       },
     });
 

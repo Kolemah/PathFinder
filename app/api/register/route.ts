@@ -58,6 +58,7 @@ export async function POST(req: Request) {
         balance: true,
         darkMode: true,
         emailVerified: true,
+        accountStatus: true,
       },
     });
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isTerminatedAccount, terminatedAccountMessage } from "@/lib/account-status";
 import { getSessionUserIdFromCookies, unauthorizedResponse } from "@/lib/session";
 
 export async function GET() {
@@ -21,11 +22,19 @@ export async function GET() {
       balance: true,
       darkMode: true,
       emailVerified: true,
+      accountStatus: true,
     },
   });
 
   if (!user) {
     return unauthorizedResponse();
+  }
+
+  if (isTerminatedAccount(user.accountStatus)) {
+    return Response.json(
+      { error: terminatedAccountMessage },
+      { status: 403 }
+    );
   }
 
   return Response.json({ user });

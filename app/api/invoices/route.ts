@@ -10,6 +10,12 @@ import {
   getSessionUserIdFromCookies,
   unauthorizedResponse,
 } from "@/lib/session";
+import {
+  isRestrictedAccount,
+  isTerminatedAccount,
+  restrictedAccountMessage,
+  terminatedAccountMessage,
+} from "@/lib/account-status";
 
 function defaultDueDate() {
   const dueDate = new Date();
@@ -21,17 +27,42 @@ function paymentReference(invoiceId: string) {
   return `MANUAL-${invoiceId.slice(-8).toUpperCase()}-${Date.now()}`;
 }
 
-async function requireVerifiedEmail(userId: string) {
+async function getInvoiceAccountAccess(userId: string) {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
     select: {
       emailVerified: true,
+      accountStatus: true,
     },
   });
 
-  return Boolean(user?.emailVerified);
+  if (!user) {
+    return { allowed: false, error: "User not found", status: 404 };
+  }
+
+  if (!user.emailVerified) {
+    return {
+      allowed: false,
+      error: "Please verify your email before creating invoices.",
+      status: 403,
+    };
+  }
+
+  if (isTerminatedAccount(user.accountStatus)) {
+    return { allowed: false, error: terminatedAccountMessage, status: 403 };
+  }
+
+  if (isRestrictedAccount(user.accountStatus)) {
+    return {
+      allowed: false,
+      error: restrictedAccountMessage("invoice"),
+      status: 403,
+    };
+  }
+
+  return { allowed: true };
 }
 
 export async function GET(req: Request) {
@@ -104,10 +135,12 @@ export async function POST(req: Request) {
 
       if (userId !== sessionUserId) return forbiddenResponse();
 
-      if (!(await requireVerifiedEmail(userId))) {
+      const access = await getInvoiceAccountAccess(userId);
+
+      if (!access.allowed) {
         return Response.json(
-          { error: "Please verify your email before renewing invoices." },
-          { status: 403 }
+          { error: access.error },
+          { status: access.status }
         );
       }
 
@@ -177,10 +210,12 @@ export async function POST(req: Request) {
 
     if (userId !== sessionUserId) return forbiddenResponse();
 
-    if (!(await requireVerifiedEmail(userId))) {
+    const access = await getInvoiceAccountAccess(userId);
+
+    if (!access.allowed) {
       return Response.json(
-        { error: "Please verify your email before creating invoices." },
-        { status: 403 }
+        { error: access.error },
+        { status: access.status }
       );
     }
 

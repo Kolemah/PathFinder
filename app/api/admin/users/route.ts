@@ -54,6 +54,7 @@ export async function GET() {
         name: user.name,
         email: user.email,
         role: user.role,
+        accountStatus: user.accountStatus,
         photo: user.photo,
         balance: user.balance,
         createdAt: user.createdAt,

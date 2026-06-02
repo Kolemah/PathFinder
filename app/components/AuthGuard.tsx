@@ -30,7 +30,7 @@ export default function AuthGuard({
       if (!res.ok) {
         localStorage.removeItem("pathfinderLoggedIn");
         localStorage.removeItem("pathfinderUser");
-        router.replace("/login");
+        router.replace(res.status === 403 ? "/login?account=terminated" : "/login");
         return;
       }
 

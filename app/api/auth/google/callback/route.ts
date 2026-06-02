@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { setSessionCookie } from "@/lib/session";
+import { isTerminatedAccount } from "@/lib/account-status";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -77,6 +78,19 @@ export async function GET(req: Request) {
 
   const randomPassword = await bcrypt.hash(randomBytesFallback(), 10);
 
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      email: googleUser.email,
+    },
+    select: {
+      accountStatus: true,
+    },
+  });
+
+  if (isTerminatedAccount(existingUser?.accountStatus)) {
+    return NextResponse.redirect(new URL("/login?account=terminated", req.url));
+  }
+
   const user = await prisma.user.upsert({
     where: {
       email: googleUser.email,
@@ -96,8 +110,13 @@ export async function GET(req: Request) {
     },
     select: {
       id: true,
+      accountStatus: true,
     },
   });
+
+  if (isTerminatedAccount(user.accountStatus)) {
+    return NextResponse.redirect(new URL("/login?account=terminated", req.url));
+  }
 
   const response = NextResponse.redirect(new URL("/dashboard", req.url));
   setSessionCookie(response, user.id);

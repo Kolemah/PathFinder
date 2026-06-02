@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isTerminatedAccount, terminatedAccountMessage } from "@/lib/account-status";
 import {
   forbiddenResponse,
   getSessionUserIdFromCookies,
@@ -22,8 +23,19 @@ export async function requireAdminUser() {
     select: {
       id: true,
       role: true,
+      accountStatus: true,
     },
   });
+
+  if (user && isTerminatedAccount(user.accountStatus)) {
+    return {
+      user: null,
+      response: Response.json(
+        { error: terminatedAccountMessage },
+        { status: 403 }
+      ),
+    };
+  }
 
   if (!user || user.role !== "Admin") {
     return {

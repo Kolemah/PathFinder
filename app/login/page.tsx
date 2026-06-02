@@ -97,6 +97,13 @@ function LoginForm() {
         </div>
       ) : null}
 
+      {searchParams.get("account") === "terminated" ? (
+        <div className="auth-notice auth-notice-error">
+          Your account has been suspended permanently for violating PathPayX
+          platform rules.
+        </div>
+      ) : null}
+
       <div className="auth-card">
         <button className="google-btn" onClick={googleLogin}>
           Sign in with Google

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isTerminatedAccount, terminatedAccountMessage } from "@/lib/account-status";
 import { releaseMaturedPayments } from "@/lib/wallet-release";
 import {
   forbiddenResponse,
@@ -42,6 +43,7 @@ export async function GET(req: Request) {
         balance: true,
         darkMode: true,
         emailVerified: true,
+        accountStatus: true,
       },
     });
 
@@ -49,6 +51,13 @@ export async function GET(req: Request) {
       return Response.json(
         { error: "User not found" },
         { status: 404 }
+      );
+    }
+
+    if (isTerminatedAccount(user.accountStatus)) {
+      return Response.json(
+        { error: terminatedAccountMessage },
+        { status: 403 }
       );
     }
 
@@ -67,7 +76,7 @@ export async function PATCH(req: Request) {
   try {
     const sessionUserId = await getSessionUserIdFromCookies();
     const body = await req.json();
-    const { userId, name, email, role, photo, balance, darkMode } = body;
+    const { userId, name, email, photo, balance, darkMode } = body;
 
     if (!sessionUserId) {
       return unauthorizedResponse();
@@ -84,6 +93,22 @@ export async function PATCH(req: Request) {
       return forbiddenResponse();
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        accountStatus: true,
+      },
+    });
+
+    if (isTerminatedAccount(existingUser?.accountStatus)) {
+      return Response.json(
+        { error: terminatedAccountMessage },
+        { status: 403 }
+      );
+    }
+
     const user = await prisma.user.update({
       where: {
         id: userId,
@@ -91,7 +116,6 @@ export async function PATCH(req: Request) {
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(email !== undefined ? { email } : {}),
-        ...(role !== undefined ? { role } : {}),
         ...(photo !== undefined ? { photo } : {}),
         ...(balance !== undefined ? { balance: Number(balance) } : {}),
         ...(darkMode !== undefined ? { darkMode: Boolean(darkMode) } : {}),
@@ -105,6 +129,7 @@ export async function PATCH(req: Request) {
         balance: true,
         darkMode: true,
         emailVerified: true,
+        accountStatus: true,
       },
     });
 
