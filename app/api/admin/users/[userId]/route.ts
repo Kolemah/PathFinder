@@ -1,10 +1,14 @@
 import { requireAdminUser } from "@/lib/admin";
 import { sendEmail } from "@/lib/email";
-import { kycStatusTemplate } from "@/lib/email-templates";
+import { accountStatusTemplate, kycStatusTemplate } from "@/lib/email-templates";
 import { prisma } from "@/lib/prisma";
 import { releaseMaturedPayments } from "@/lib/wallet-release";
 import { PAYMENT_STATUS_PENDING_CLEARANCE } from "@/lib/wallet";
-import { accountStatusOptions } from "@/lib/account-status";
+import {
+  ACCOUNT_RESTRICTED,
+  ACCOUNT_TERMINATED,
+  accountStatusOptions,
+} from "@/lib/account-status";
 
 function sum(items: { amount: number }[]) {
   return items.reduce((total, item) => total + Number(item.amount), 0);
@@ -135,6 +139,7 @@ export async function PATCH(
         id: true,
         name: true,
         email: true,
+        accountStatus: true,
       },
     });
 
@@ -172,6 +177,27 @@ export async function PATCH(
           accountStatus,
         },
       });
+
+      if (
+        accountStatus !== existingUser.accountStatus &&
+        (accountStatus === ACCOUNT_RESTRICTED ||
+          accountStatus === ACCOUNT_TERMINATED)
+      ) {
+        const restricted = accountStatus === ACCOUNT_RESTRICTED;
+
+        sendEmail({
+          to: existingUser.email,
+          subject: restricted
+            ? "Your PathPayX account has been restricted"
+            : "Your PathPayX account has been terminated",
+          html: accountStatusTemplate({
+            name: existingUser.name,
+            status: restricted ? "restricted" : "terminated",
+          }),
+        }).catch((error) => {
+          console.log("ACCOUNT STATUS EMAIL ERROR:", error);
+        });
+      }
     }
 
     if (kycStatus !== undefined) {

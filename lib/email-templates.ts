@@ -25,6 +25,11 @@ type KycStatusProps = BaseEmailProps & {
   kycUrl: string;
 };
 
+type AccountStatusProps = BaseEmailProps & {
+  status: "restricted" | "terminated";
+  supportEmail?: string;
+};
+
 const brand = {
   green: "#0f766e",
   teal: "#14b8a6",
@@ -252,6 +257,40 @@ export function kycStatusTemplate({
       )}
       ${button(approved ? "Go to wallet" : "Review KYC", kycUrl, approved ? brand.green : brand.danger)}
       ${backupLink(kycUrl)}
+    `,
+  });
+}
+
+export function accountStatusTemplate({
+  name,
+  status,
+  supportEmail = "help@pathpayx.com",
+  preview,
+}: AccountStatusProps) {
+  const restricted = status === "restricted";
+
+  return layout({
+    title: restricted ? "Your PathPayX account is restricted" : "Your PathPayX account has been terminated",
+    preview:
+      preview ||
+      (restricted
+        ? "Your PathPayX account has been restricted. Invoice creation and payouts are temporarily locked."
+        : "Your PathPayX account has been permanently suspended."),
+    children: `
+      ${heading(restricted ? "Account restricted" : "Account terminated")}
+      ${paragraph(greeting(name))}
+      ${paragraph(
+        restricted
+          ? "Your PathPayX account has been restricted after an admin review. You can still sign in and view your dashboard, but you cannot create new invoices or request payouts while this restriction is active."
+          : "Your PathPayX account has been permanently suspended for violating PathPayX platform rules. You will no longer be able to sign in or use seller features on the platform."
+      )}
+      ${paragraph(
+        restricted
+          ? "If you believe this was a mistake or you need help resolving the issue, contact our support team."
+          : "If you believe this decision was made in error, you can contact our support team for review."
+      )}
+      ${button("Contact support", `mailto:${supportEmail}`, restricted ? brand.green : brand.danger)}
+      ${paragraph(`Support email: <strong style="color:${brand.navy};">${escapeHtml(supportEmail)}</strong>`)}
     `,
   });
 }
