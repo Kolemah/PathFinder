@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import AppShell from "./components/AppShell";
 import AuthGuard from "./components/AuthGuard";
 import ToastContainer from "./components/ToastContainer";
+import SupportChatbot from "./components/SupportChatbot";
 import { AppProvider } from "./context/AppContext";
 import "./globals.css";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
           )}
 
           <ToastContainer />
+          <SupportChatbot />
         </AppProvider>
       </body>
     </html>
