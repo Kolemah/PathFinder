@@ -24,6 +24,7 @@ export default function WalletPage() {
   } = useAppContext();
   const [exchangeRate, setExchangeRate] = useState(USD_TO_NGN_RATE);
   const [exchangeRateSource, setExchangeRateSource] = useState("Fallback");
+  const [exchangeRateUpdatedAt, setExchangeRateUpdatedAt] = useState("");
   const [requestingPayout, setRequestingPayout] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function WalletPage() {
 
         setExchangeRate(Number(data.rate || USD_TO_NGN_RATE));
         setExchangeRateSource(data.isLive ? data.source : "Fallback rate");
+        setExchangeRateUpdatedAt(data.lastUpdated || "");
       } catch (error) {
         console.log("LOAD EXCHANGE RATE ERROR:", error);
       }
@@ -165,6 +167,15 @@ export default function WalletPage() {
     return formatNaira(amount);
   }
 
+  function exchangeRateMeta() {
+    if (!exchangeRateUpdatedAt) return exchangeRateSource;
+
+    return `${exchangeRateSource} • updated ${new Intl.DateTimeFormat("en", {
+      month: "short",
+      day: "numeric",
+    }).format(new Date(exchangeRateUpdatedAt))}`;
+  }
+
   return (
     <div className="page">
       <PageHeader title="Wallet" />
@@ -172,7 +183,7 @@ export default function WalletPage() {
       <div className="wallet-rate">
         <span>Today&apos;s rate</span>
         <strong>1 USD → {formatNaira(exchangeRate)}</strong>
-        <small>{exchangeRateSource}</small>
+        <small>{exchangeRateMeta()}</small>
       </div>
 
       <div className="wallet-summary-cards">

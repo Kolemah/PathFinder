@@ -11,6 +11,7 @@ import {
   Wallet,
 } from "lucide-react";
 import LandingNavbar from "./components/LandingNavbar";
+import LandingRateCard from "./components/LandingRateCard";
 
 const workflow = [
   {
@@ -88,10 +89,7 @@ export default function HomePage() {
           </div>
 
           <div className="landing-hero-image">
-            <div className="landing-rate-card">
-              <span>Today&apos;s rate</span>
-              <strong>$1 → ₦1,393.23</strong>
-            </div>
+            <LandingRateCard />
             <Image
               src="/pathpayx-landing-hero.png"
               alt="Nigerian freelancers using PathPayX to receive USD payments and withdraw in naira"
@@ -207,3 +205,4 @@ export default function HomePage() {
     </div>
   );
 }
+
