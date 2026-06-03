@@ -83,6 +83,8 @@ justify-content:space-between;
 padding:0 30px;
 background:rgba(255,255,255,0.9);
 backdrop-filter:blur(14px);
+position:relative;
+z-index:7000;
 }
 
 .search-box{
@@ -122,7 +124,7 @@ gap:18px;
   border-radius: 8px;
   padding: 14px;
   box-shadow: 0 24px 60px rgba(16, 32, 51, 0.16);
-  z-index: 999;
+  z-index: 8000;
 }
 
 .notification-panel-dark {
