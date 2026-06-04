@@ -10,6 +10,7 @@ import {
 } from "@/lib/wallet";
 import { sendEmail } from "@/lib/email";
 import { invoicePaidTemplate } from "@/lib/email-templates";
+import { getFlutterwaveV4Credentials } from "@/lib/flutterwave-v4";
 
 const FLUTTERWAVE_API_URL = "https://api.flutterwave.com/v3";
 
@@ -88,6 +89,14 @@ export async function createFlutterwaveCheckout(invoice: PayableInvoice) {
   const secretKey = getFlutterwaveSecretKey();
 
   if (!secretKey) {
+    const { clientId, clientSecret } = getFlutterwaveV4Credentials();
+
+    if (clientId && clientSecret) {
+      throw new Error(
+        "Flutterwave V4 keys are configured, but this payment button still uses V3 hosted checkout. Use /api/flutterwave/v4-status to test V4 credentials."
+      );
+    }
+
     throw new Error("FLUTTERWAVE_SECRET_KEY is not configured");
   }
 
