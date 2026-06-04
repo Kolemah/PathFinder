@@ -387,21 +387,22 @@ export default function PayInvoicePage() {
         </div>
 
         <div className="payment-actions">
-          <Button onClick={payInvoice} disabled={paying || isPaid || isExpired}>
+          <Button
+            onClick={() => setV4Open(true)}
+            disabled={isPaid || isExpired}
+          >
             {isPaid
               ? "Invoice Paid"
               : isExpired
               ? "Invoice Expired"
-              : paying
-              ? "Processing..."
-              : "Pay Invoice"}
+              : "Pay with card"}
           </Button>
           <p>
             {isExpired
               ? "This invoice has passed its due date. Please contact the sender for a new invoice."
               : isPaid && invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
               ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
-              : "You will be redirected to Flutterwave to complete this payment securely."}
+              : "Pay securely with Flutterwave V4 card payment."}
           </p>
 
           {!isPaid && !isExpired && (
@@ -411,7 +412,7 @@ export default function PayInvoicePage() {
                 className="payment-v4-toggle"
                 onClick={() => setV4Open((current) => !current)}
               >
-                {v4Open ? "Hide V4 card payment" : "Try Flutterwave V4 card payment"}
+                {v4Open ? "Hide card form" : "Enter card details"}
               </button>
 
               {v4Open && (
@@ -504,6 +505,15 @@ export default function PayInvoicePage() {
                       <Button onClick={payWithV4Card} disabled={v4Paying}>
                         {v4Paying ? "Processing V4..." : "Pay with V4 card"}
                       </Button>
+
+                      <button
+                        type="button"
+                        className="payment-v3-fallback"
+                        onClick={payInvoice}
+                        disabled={paying}
+                      >
+                        {paying ? "Starting hosted checkout..." : "Use old hosted checkout"}
+                      </button>
                     </>
                   ) : (
                     <div className="payment-v4-auth">
