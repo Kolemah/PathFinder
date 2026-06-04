@@ -476,7 +476,7 @@ export default function PayInvoicePage() {
                             }
                             inputMode="numeric"
                             autoComplete="cc-exp-year"
-                            placeholder="YYYY"
+                            placeholder="YY"
                           />
                         </label>
 

@@ -228,8 +228,8 @@ function phoneParts(phoneNumber: string, fallbackCountryCode = "234") {
 function normalizeExpiryYear(expiryYear: string) {
   const cleanYear = expiryYear.replace(/\D/g, "");
 
-  if (cleanYear.length === 2) {
-    return `20${cleanYear}`;
+  if (cleanYear.length >= 2) {
+    return cleanYear.slice(-2);
   }
 
   return cleanYear;
