@@ -68,6 +68,24 @@ export default function PayInvoicePage() {
     loadInvoice();
   }, [params.invoiceId, showToast]);
 
+  useEffect(() => {
+    const paymentStatus = new URLSearchParams(window.location.search).get(
+      "payment"
+    );
+
+    if (paymentStatus === "success") {
+      showToast("Payment verified successfully", "success");
+    }
+
+    if (paymentStatus === "failed") {
+      showToast("Payment could not be verified", "error");
+    }
+
+    if (paymentStatus === "cancelled") {
+      showToast("Payment was cancelled", "info");
+    }
+  }, [showToast]);
+
   async function payInvoice() {
     setPaying(true);
 
@@ -82,9 +100,13 @@ export default function PayInvoicePage() {
       return;
     }
 
-    setInvoice(data.invoice);
-    showToast(data.message || "Payment successful", "success");
-    setPaying(false);
+    if (!data.checkoutUrl) {
+      showToast("Checkout link was not created", "error");
+      setPaying(false);
+      return;
+    }
+
+    window.location.href = data.checkoutUrl;
   }
 
   function formatDate(date: string) {
@@ -221,7 +243,7 @@ export default function PayInvoicePage() {
               ? "This invoice has passed its due date. Please contact the sender for a new invoice."
               : isPaid && invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
               ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
-              : "This is a test payment action. A real checkout provider can replace it later."}
+              : "You will be redirected to Flutterwave to complete this payment securely."}
           </p>
         </div>
       </div>

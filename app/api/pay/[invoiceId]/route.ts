@@ -1,13 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getInvoiceStatus } from "@/lib/invoice-status";
 import {
-  PAYMENT_STATUS_PENDING_CLEARANCE,
-  calculateWalletAmounts,
-  formatUsd,
-  paymentAvailableAt,
-} from "@/lib/wallet";
-import { sendEmail } from "@/lib/email";
-import { invoicePaidTemplate } from "@/lib/email-templates";
+  createFlutterwaveCheckout,
+  isInvoicePayable,
+} from "@/lib/flutterwave";
 
 function invoiceResponse(invoice: {
   id: string;
@@ -61,10 +56,6 @@ function invoiceResponse(invoice: {
     customer: invoice.customer,
     business: invoice.user,
   };
-}
-
-function paymentReference(invoiceId: string) {
-  return `TEST-${invoiceId.slice(-8).toUpperCase()}-${Date.now()}`;
 }
 
 export async function GET(
@@ -129,85 +120,23 @@ export async function POST(
     );
   }
 
-  if (invoice.status === "Paid") {
-    return Response.json({
-      message: "Invoice is already paid",
-      invoice: invoiceResponse(invoice),
-    });
-  }
+  const paymentAccess = isInvoicePayable(invoice);
 
-  if (getInvoiceStatus(invoice.status, invoice.dueDate) === "Overdue") {
+  if (!paymentAccess.payable) {
     return Response.json(
       {
-        error: "Invoice expired",
+        error: paymentAccess.error,
         invoice: invoiceResponse(invoice),
       },
-      { status: 410 }
+      { status: paymentAccess.status }
     );
   }
 
-  const paidInvoice = await prisma.$transaction(async (tx) => {
-    const paidAt = new Date();
-    const walletAmounts = calculateWalletAmounts(invoice.amount);
-
-    const updatedInvoice = await tx.invoice.update({
-      where: {
-        id: invoice.id,
-      },
-      data: {
-        status: "Paid",
-        paidAt,
-        paymentAvailableAt: paymentAvailableAt(paidAt),
-        paymentMethod: "Test Checkout",
-        paymentReference: paymentReference(invoice.id),
-        paymentStatus: PAYMENT_STATUS_PENDING_CLEARANCE,
-        checkoutProvider: "Internal Test",
-        ...walletAmounts,
-      },
-      include: {
-        customer: true,
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    await tx.transaction.create({
-      data: {
-        userId: invoice.user.id,
-        type: "Payment Pending Clearance",
-        amount: invoice.amount,
-      },
-    });
-
-    return updatedInvoice;
-  });
-
-  sendEmail({
-    to: invoice.user.email,
-    subject: "Invoice payment received",
-    html: invoicePaidTemplate({
-      name: invoice.user.name,
-      clientName: invoice.customer.name,
-      amount: formatUsd(invoice.amount),
-      invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invoices`,
-      releaseDate: paidInvoice.paymentAvailableAt
-        ? new Intl.DateTimeFormat("en", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }).format(paidInvoice.paymentAvailableAt)
-        : undefined,
-    }),
-  }).catch((error) => {
-    console.log("INVOICE PAID EMAIL ERROR:", error);
-  });
+  const checkout = await createFlutterwaveCheckout(invoice);
 
   return Response.json({
-    message: "Payment received and held for 3 days",
-    invoice: invoiceResponse(paidInvoice),
+    message: "Flutterwave checkout created",
+    checkoutUrl: checkout.checkoutUrl,
+    txRef: checkout.txRef,
   });
 }
