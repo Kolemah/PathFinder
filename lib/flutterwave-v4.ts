@@ -87,7 +87,10 @@ export function getFlutterwaveV4BaseUrl() {
 }
 
 export function flutterwaveV4Reference(invoiceId: string) {
-  return `PATHPAYX-V4-${invoiceId}-${Date.now()}`;
+  return `PXV4-${invoiceId.slice(-12)}-${Date.now().toString(36)}`.slice(
+    0,
+    42
+  );
 }
 
 export async function getFlutterwaveV4AccessToken() {
@@ -177,6 +180,59 @@ function splitName(name: string) {
     first: parts[0] || "Customer",
     last: parts.slice(1).join(" ") || "Client",
   };
+}
+
+function countryCode(country: string) {
+  const normalizedCountry = country.trim().toLowerCase();
+  const countries: Record<string, string> = {
+    canada: "CA",
+    colombia: "CO",
+    egypt: "EG",
+    france: "FR",
+    germany: "DE",
+    ghana: "GH",
+    kenya: "KE",
+    nigeria: "NG",
+    "south africa": "ZA",
+    "united kingdom": "GB",
+    "united states": "US",
+    usa: "US",
+  };
+
+  return countries[normalizedCountry] || country.slice(0, 2).toUpperCase();
+}
+
+function phoneParts(phoneNumber: string, fallbackCountryCode = "234") {
+  const digits = phoneNumber.replace(/\D/g, "");
+
+  if (digits.startsWith("234") && digits.length > 10) {
+    return {
+      countryCode: "234",
+      number: digits.slice(3),
+    };
+  }
+
+  if (digits.startsWith("0") && digits.length > 1) {
+    return {
+      countryCode: fallbackCountryCode,
+      number: digits.slice(1),
+    };
+  }
+
+  return {
+    countryCode: fallbackCountryCode,
+    number: digits,
+  };
+}
+
+function normalizeExpiryYear(expiryYear: string) {
+  const cleanYear = expiryYear.replace(/\D/g, "");
+
+  if (cleanYear.length === 2) {
+    return `20${cleanYear}`;
+  }
+
+  return cleanYear;
 }
 
 function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
@@ -283,6 +339,7 @@ export async function createFlutterwaveV4CardCharge({
   const reference = flutterwaveV4Reference(invoice.id);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const customerName = splitName(invoice.customer.name);
+  const phone = phoneParts(card.phoneNumber || "");
 
   const data = await flutterwaveV4Fetch("/orchestration/direct-charges", {
     method: "POST",
@@ -297,29 +354,27 @@ export async function createFlutterwaveV4CardCharge({
           nonce,
           encrypted_card_number: await encryptAES(card.cardNumber, nonce),
           encrypted_expiry_month: await encryptAES(card.expiryMonth, nonce),
-          encrypted_expiry_year: await encryptAES(card.expiryYear, nonce),
+          encrypted_expiry_year: await encryptAES(
+            normalizeExpiryYear(card.expiryYear),
+            nonce
+          ),
           encrypted_cvv: await encryptAES(card.cvv, nonce),
-          card_holder_name: card.cardholderName || invoice.customer.name,
         },
       },
       customer: {
         email: invoice.customer.email,
         name: customerName,
         address: {
-          country: invoice.customer.country,
+          country: countryCode(invoice.customer.country),
           city: invoice.customer.state,
           state: invoice.customer.state,
           postal_code: invoice.customer.zipcode,
           line1: invoice.customer.address,
         },
-        ...(card.phoneNumber
-          ? {
-              phone: {
-                country_code: "234",
-                number: card.phoneNumber.replace(/\D/g, ""),
-              },
-            }
-          : {}),
+        phone: {
+          country_code: phone.countryCode,
+          number: phone.number,
+        },
       },
       meta: {
         invoiceId: invoice.id,

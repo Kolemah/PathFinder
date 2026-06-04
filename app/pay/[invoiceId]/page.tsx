@@ -193,6 +193,11 @@ export default function PayInvoicePage() {
   }
 
   async function payWithV4Card() {
+    if (!v4Card.phoneNumber.trim()) {
+      showToast("Phone number is required for Flutterwave V4 card payment", "error");
+      return;
+    }
+
     setV4Paying(true);
 
     try {
@@ -498,7 +503,7 @@ export default function PayInvoicePage() {
                           }
                           inputMode="tel"
                           autoComplete="tel"
-                          placeholder="Optional"
+                          placeholder="08012345678"
                         />
                       </label>
 
