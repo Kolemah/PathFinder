@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Button from "../../components/button";
@@ -50,6 +50,7 @@ export default function PayInvoicePage() {
   const [invoice, setInvoice] = useState<PaymentInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const paymentStatusHandled = useRef(false);
 
   useEffect(() => {
     async function loadInvoice() {
@@ -70,9 +71,15 @@ export default function PayInvoicePage() {
   }, [params.invoiceId, showToast]);
 
   useEffect(() => {
+    if (paymentStatusHandled.current) return;
+
     const paymentStatus = new URLSearchParams(window.location.search).get(
       "payment"
     );
+
+    if (!paymentStatus) return;
+
+    paymentStatusHandled.current = true;
 
     if (paymentStatus === "success") {
       showToast("Payment verified successfully", "success");
@@ -85,6 +92,10 @@ export default function PayInvoicePage() {
     if (paymentStatus === "cancelled") {
       showToast("Payment was cancelled", "info");
     }
+
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.delete("payment");
+    window.history.replaceState(null, "", nextUrl.toString());
   }, [showToast]);
 
   async function payInvoice() {
