@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { getUsdToNgnRate } from "@/lib/exchange-rate";
+import { getCurrencyToNgnRate } from "@/lib/exchange-rate";
 import {
+  DEFAULT_INVOICE_CURRENCY,
   PAYMENT_STATUS_PENDING_CLEARANCE,
   PAYMENT_STATUS_RELEASED,
   calculateWalletAmounts,
@@ -23,11 +24,13 @@ export async function releaseMaturedPayments(userId: string) {
 
   if (invoices.length === 0) return { releasedCount: 0, releasedAmountNgn: 0 };
 
-  const { rate } = await getUsdToNgnRate();
   let releasedAmountNgn = 0;
 
   await prisma.$transaction(async (tx) => {
     for (const invoice of invoices) {
+      const { rate } = await getCurrencyToNgnRate(
+        invoice.currency || DEFAULT_INVOICE_CURRENCY
+      );
       const walletAmounts = calculateWalletAmounts(invoice.amount, rate);
       const { netAmountNgn } = walletAmounts;
 

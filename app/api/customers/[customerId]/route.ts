@@ -28,6 +28,7 @@ export async function GET(
             id: true,
             description: true,
             amount: true,
+            currency: true,
             status: true,
             dueDate: true,
             paidAt: true,

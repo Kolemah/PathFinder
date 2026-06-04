@@ -20,6 +20,7 @@ type Invoice = {
   zipcode: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   createdAt?: string;
   dueDate?: string;
@@ -120,6 +121,7 @@ function invoiceFromDatabase(invoice: {
   id: string;
   description: string;
   amount: number;
+  currency?: string;
   status: string;
   createdAt?: string | Date;
   dueDate?: string | Date;
@@ -154,6 +156,7 @@ function invoiceFromDatabase(invoice: {
     zipcode: invoice.customer.zipcode,
     description: invoice.description,
     amount: invoice.amount,
+    currency: invoice.currency || "USD",
     status: invoice.status,
     createdAt: invoice.createdAt ? new Date(invoice.createdAt).toISOString() : "",
     dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString() : "",
@@ -425,7 +428,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    await createTransaction("Payment Pending Clearance", Number(invoice.amount));
+    await createTransaction(
+      "Payment Pending Clearance NGN Estimate",
+      Number(updatedInvoice.netAmountNgn || 0)
+    );
     await refreshUserData();
     addNotification(`${invoice.name} payment is pending 3-day clearance`, "success", {
       href: "/wallet",
@@ -491,6 +497,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         zipcode: nextInvoice.zipcode,
         description: nextInvoice.description,
         amount: nextInvoice.amount,
+        currency: nextInvoice.currency,
         status: nextInvoice.status,
         dueDate: nextInvoice.dueDate,
       }),

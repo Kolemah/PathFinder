@@ -8,14 +8,15 @@ import { useAppContext } from "../../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import {
   PAYMENT_STATUS_PENDING_CLEARANCE,
+  formatCurrency,
   formatNaira,
-  formatUsd,
 } from "@/lib/wallet";
 
 type PaymentInvoice = {
   id: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   dueDate: string;
   paidAt: string | null;
@@ -160,7 +161,7 @@ export default function PayInvoicePage() {
           </span>
         </div>
 
-        <h1>{formatUsd(Number(invoice.amount))}</h1>
+        <h1>{formatCurrency(Number(invoice.amount), invoice.currency)}</h1>
         <p className="payment-description">{invoice.description}</p>
 
         <div className="payment-details">
@@ -202,7 +203,10 @@ export default function PayInvoicePage() {
               <span>Seller Receives</span>
               <strong>{formatNaira(Number(invoice.netAmountNgn || 0))}</strong>
               <p>
-                {formatUsd(Number(invoice.platformFeeUsd || 0))} platform fee
+                {formatCurrency(
+                  Number(invoice.platformFeeUsd || 0),
+                  invoice.currency
+                )} platform fee
               </p>
             </div>
           )}

@@ -7,11 +7,13 @@ import Card from "../../components/card";
 import PageHeader from "../../components/PageHeader";
 import { useAppContext } from "../../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
+import { formatCurrency } from "@/lib/wallet";
 
 type CustomerInvoice = {
   id: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   dueDate: string;
   paidAt: string | null;
@@ -74,23 +76,17 @@ export default function CustomerDetailPage() {
     return invoices.reduce(
       (summary, invoice) => {
         const status = getInvoiceStatus(invoice.status, invoice.dueDate);
-        const amount = Number(invoice.amount);
-
-        summary.total += amount;
         summary.count += 1;
 
         if (status === "Paid") {
-          summary.paid += amount;
           summary.paidCount += 1;
         }
 
         if (status === "Pending") {
-          summary.pending += amount;
           summary.pendingCount += 1;
         }
 
         if (status === "Overdue") {
-          summary.overdue += amount;
           summary.overdueCount += 1;
         }
 
@@ -179,30 +175,26 @@ export default function CustomerDetailPage() {
 
         <div className="customer-detail-stats">
           <Card>
-            <span className="metric-label">Total Value</span>
-            <strong className="metric-value">${stats.total.toLocaleString()}</strong>
+            <span className="metric-label">Total Invoices</span>
+            <strong className="metric-value">{stats.count}</strong>
             <p className="metric-note">{stats.count} invoices created</p>
           </Card>
 
           <Card>
             <span className="metric-label">Paid</span>
-            <strong className="metric-value">${stats.paid.toLocaleString()}</strong>
+            <strong className="metric-value">{stats.paidCount}</strong>
             <p className="metric-note">{stats.paidCount} paid invoices</p>
           </Card>
 
           <Card>
             <span className="metric-label">Pending</span>
-            <strong className="metric-value">
-              ${stats.pending.toLocaleString()}
-            </strong>
+            <strong className="metric-value">{stats.pendingCount}</strong>
             <p className="metric-note">{stats.pendingCount} awaiting payment</p>
           </Card>
 
           <Card>
             <span className="metric-label">Overdue</span>
-            <strong className="metric-value">
-              ${stats.overdue.toLocaleString()}
-            </strong>
+            <strong className="metric-value">{stats.overdueCount}</strong>
             <p className="metric-note">{stats.overdueCount} expired invoices</p>
           </Card>
         </div>
@@ -238,7 +230,9 @@ export default function CustomerDetailPage() {
                     )}
                   </div>
 
-                  <strong>${Number(invoice.amount).toLocaleString()}</strong>
+                  <strong>
+                    {formatCurrency(Number(invoice.amount), invoice.currency)}
+                  </strong>
 
                   <span
                     className={`invoice-status ${

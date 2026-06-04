@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppContext } from "../context/AppContext";
-import { formatNaira, formatUsd } from "@/lib/wallet";
+import { formatNaira } from "@/lib/wallet";
 
 type Transaction = {
   id: string | number;
@@ -17,10 +17,6 @@ export default function Transactions({
   const { darkMode } = useAppContext();
 
   function transactionAmount(transaction: Transaction) {
-    if (transaction.type.toLowerCase().includes("pending")) {
-      return formatUsd(Number(transaction.amount));
-    }
-
     return formatNaira(Number(transaction.amount));
   }
 

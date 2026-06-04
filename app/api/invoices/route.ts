@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import {
+  DEFAULT_INVOICE_CURRENCY,
   PAYMENT_STATUS_PENDING_CLEARANCE,
   calculateWalletAmounts,
+  isSupportedInvoiceCurrency,
   paymentAvailableAt,
 } from "@/lib/wallet";
+import { getCurrencyToNgnRate } from "@/lib/exchange-rate";
 import {
   forbiddenResponse,
   getSessionUserIdFromCookies,
@@ -121,6 +124,7 @@ export async function POST(req: Request) {
       zipcode,
       description,
       amount,
+      currency,
     } = body;
 
     if (!sessionUserId) return unauthorizedResponse();
@@ -175,6 +179,7 @@ export async function POST(req: Request) {
         data: {
           description: sourceInvoice.description,
           amount: sourceInvoice.amount,
+          currency: sourceInvoice.currency,
           status: "Pending",
           dueDate: defaultDueDate(),
           userId,
@@ -200,7 +205,8 @@ export async function POST(req: Request) {
       !address ||
       !zipcode ||
       !description ||
-      !amount
+      !amount ||
+      !currency
     ) {
       return Response.json(
         { error: "All fields are required" },
@@ -221,7 +227,14 @@ export async function POST(req: Request) {
 
     if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
       return Response.json(
-        { error: "Amount must be a valid dollar amount." },
+        { error: "Amount must be a valid invoice amount." },
+        { status: 400 }
+      );
+    }
+
+    if (!isSupportedInvoiceCurrency(currency)) {
+      return Response.json(
+        { error: "Invoice currency is not supported." },
         { status: 400 }
       );
     }
@@ -242,6 +255,7 @@ export async function POST(req: Request) {
       data: {
         description,
         amount: Number(amount),
+        currency,
         status: "Pending",
         dueDate: defaultDueDate(),
         userId,
@@ -282,6 +296,7 @@ export async function PATCH(req: Request) {
       zipcode,
       description,
       amount,
+      currency,
       dueDate,
     } = body;
 
@@ -320,9 +335,22 @@ export async function PATCH(req: Request) {
       );
     }
 
+    if (currency !== undefined && !isSupportedInvoiceCurrency(currency)) {
+      return Response.json(
+        { error: "Invoice currency is not supported." },
+        { status: 400 }
+      );
+    }
+
     const updatedInvoice = await prisma.$transaction(async (tx) => {
       const isMarkingPaid = status === "Paid" && invoice.status !== "Paid";
       const paidAt = new Date();
+      const paymentAmount = amount !== undefined ? Number(amount) : invoice.amount;
+      const paymentCurrency =
+        currency !== undefined ? currency : invoice.currency || DEFAULT_INVOICE_CURRENCY;
+      const { rate } = isMarkingPaid
+        ? await getCurrencyToNgnRate(paymentCurrency)
+        : { rate: invoice.exchangeRate };
 
       if (
         name !== undefined ||
@@ -355,6 +383,7 @@ export async function PATCH(req: Request) {
           ...(status !== undefined ? { status } : {}),
           ...(description !== undefined ? { description } : {}),
           ...(amount !== undefined ? { amount: Number(amount) } : {}),
+          ...(currency !== undefined ? { currency } : {}),
           ...(dueDate !== undefined ? { dueDate: new Date(dueDate) } : {}),
           ...(isMarkingPaid
             ? {
@@ -364,7 +393,7 @@ export async function PATCH(req: Request) {
                 paymentReference: paymentReference(id),
                 paymentStatus: PAYMENT_STATUS_PENDING_CLEARANCE,
                 checkoutProvider: "Internal Test",
-                ...calculateWalletAmounts(invoice.amount),
+                ...calculateWalletAmounts(paymentAmount, rate),
               }
             : {}),
         },

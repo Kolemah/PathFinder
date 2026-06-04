@@ -19,8 +19,8 @@ const workflow = [
     copy: "Send a professional invoice and payment link to your client in minutes.",
   },
   {
-    title: "Client pays in USD",
-    copy: "Receive payments from clients worldwide into your pending USD balance.",
+    title: "Client pays in their currency",
+    copy: "Receive payments from clients worldwide in supported currencies.",
   },
   {
     title: "Funds clear after 3 days",
@@ -64,7 +64,7 @@ export default function HomePage() {
         <section className="landing-hero">
           <div className="landing-hero-copy">
             <span className="landing-eyebrow">Built for Nigerian freelancers</span>
-            <h1>Invoice global clients. Receive USD. Withdraw in naira.</h1>
+            <h1>Invoice global clients. Withdraw in naira.</h1>
             <p>
               PathPayX helps freelancers send invoices, receive payments from
               clients worldwide, hold funds for buyer confirmation, and withdraw
@@ -73,7 +73,7 @@ export default function HomePage() {
 
             <div className="landing-hero-pills" aria-label="PathPayX payment highlights">
               <span>Worldwide payments</span>
-              <span>USD invoices</span>
+              <span>Multi-currency invoices</span>
               <span>3-day protection</span>
               <span>NGN payouts</span>
             </div>
@@ -92,7 +92,7 @@ export default function HomePage() {
             <LandingRateCard />
             <Image
               src="/pathpayx-landing-hero.png"
-              alt="Nigerian freelancers using PathPayX to receive USD payments and withdraw in naira"
+              alt="Nigerian freelancers using PathPayX to receive global payments and withdraw in naira"
               width={1680}
               height={945}
               priority
@@ -120,7 +120,7 @@ export default function HomePage() {
             <span className="landing-eyebrow">Your money flow, visible</span>
             <h2>Track every invoice from payment link to payout.</h2>
             <p>
-              Keep clients, pending USD, cleared naira, KYC status, and payout
+              Keep clients, pending payments, cleared naira, KYC status, and payout
               history in one calm dashboard.
             </p>
           </div>

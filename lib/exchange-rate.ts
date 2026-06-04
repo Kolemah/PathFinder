@@ -1,5 +1,17 @@
 import { USD_TO_NGN_RATE } from "@/lib/wallet";
 
+const fallbackRatesToNgn: Record<string, number> = {
+  GBP: 1870,
+  CAD: 1025,
+  COP: 0.35,
+  EGP: 29,
+  EUR: 1600,
+  KES: 10.8,
+  NGN: 1,
+  ZAR: 78,
+  USD: USD_TO_NGN_RATE,
+};
+
 type ExchangeRateResult = {
   rate: number;
   source: string;
@@ -7,13 +19,25 @@ type ExchangeRateResult = {
   lastUpdated?: string;
 };
 
-export async function getUsdToNgnRate(): Promise<ExchangeRateResult> {
+export async function getCurrencyToNgnRate(
+  currency = "USD"
+): Promise<ExchangeRateResult> {
+  const baseCurrency = currency.toUpperCase();
+
+  if (baseCurrency === "NGN") {
+    return {
+      rate: 1,
+      source: "Direct",
+      isLive: true,
+    };
+  }
+
   const apiKey = process.env.EXCHANGE_RATE_API_KEY;
 
   try {
     if (apiKey) {
       const res = await fetch(
-        `https://v6.exchangerate-api.com/v6/${apiKey}/pair/USD/NGN`,
+        `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${baseCurrency}/NGN`,
         {
           next: {
             revalidate: 3600,
@@ -40,7 +64,7 @@ export async function getUsdToNgnRate(): Promise<ExchangeRateResult> {
       };
     }
 
-    const res = await fetch("https://open.er-api.com/v6/latest/USD", {
+    const res = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`, {
       next: {
         revalidate: 3600,
       },
@@ -67,9 +91,13 @@ export async function getUsdToNgnRate(): Promise<ExchangeRateResult> {
     console.log("EXCHANGE RATE ERROR:", error);
 
     return {
-      rate: USD_TO_NGN_RATE,
+      rate: fallbackRatesToNgn[baseCurrency] || USD_TO_NGN_RATE,
       source: "Fallback",
       isLive: false,
     };
   }
+}
+
+export async function getUsdToNgnRate(): Promise<ExchangeRateResult> {
+  return getCurrencyToNgnRate("USD");
 }

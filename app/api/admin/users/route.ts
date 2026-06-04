@@ -44,7 +44,9 @@ export async function GET() {
         (invoice) => invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
       );
       const platformFeeUsd = paidInvoices.reduce(
-        (total, invoice) => total + Number(invoice.platformFeeUsd || 0),
+        (total, invoice) =>
+          total +
+          Number(invoice.platformFeeUsd || 0) * Number(invoice.exchangeRate || 1),
         0
       );
       const totalPayouts = sum(user.payouts);
@@ -61,7 +63,10 @@ export async function GET() {
         kycStatus: user.kycVerification?.status || "Not Submitted",
         invoiceCount: user.invoices.length,
         paidInvoiceCount: paidInvoices.length,
-        pendingUsd: sum(pendingInvoices),
+        pendingUsd: pendingInvoices.reduce(
+          (total, invoice) => total + Number(invoice.netAmountNgn || 0),
+          0
+        ),
         totalPaidUsd: sum(paidInvoices),
         platformFeeUsd,
         totalPayouts,

@@ -22,26 +22,6 @@ export default function AnalyticsPage() {
     (invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Overdue"
   );
 
-  const totalInvoiceValue = invoices.reduce(
-    (total, invoice) => total + Number(invoice.amount),
-    0
-  );
-
-  const paidRevenue = paidInvoices.reduce(
-    (total, invoice) => total + Number(invoice.amount),
-    0
-  );
-
-  const pendingRevenue = pendingInvoices.reduce(
-    (total, invoice) => total + Number(invoice.amount),
-    0
-  );
-
-  const overdueRevenue = overdueInvoices.reduce(
-    (total, invoice) => total + Number(invoice.amount),
-    0
-  );
-
   const totalCredits = transactions
     .filter((transaction) =>
       transaction.type.toLowerCase().includes("credit") ||
@@ -63,19 +43,19 @@ export default function AnalyticsPage() {
   const revenueChartData = [
     {
       label: "Paid",
-      revenue: paidRevenue,
+      revenue: paidInvoices.length,
     },
     {
       label: "Pending",
-      revenue: pendingRevenue,
+      revenue: pendingInvoices.length,
     },
     {
       label: "Overdue",
-      revenue: overdueRevenue,
+      revenue: overdueInvoices.length,
     },
     {
       label: "Total",
-      revenue: totalInvoiceValue,
+      revenue: invoices.length,
     },
   ];
 
@@ -95,28 +75,22 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card>
-          <span className="metric-label">Paid Revenue</span>
-          <strong className="metric-value">
-            ${paidRevenue.toLocaleString()}
-          </strong>
+          <span className="metric-label">Paid Invoices</span>
+          <strong className="metric-value">{paidInvoices.length}</strong>
           <p className="metric-note">{paidInvoices.length} paid invoices</p>
         </Card>
 
         <Card>
-          <span className="metric-label">Pending Value</span>
-          <strong className="metric-value">
-            ${pendingRevenue.toLocaleString()}
-          </strong>
+          <span className="metric-label">Pending Invoices</span>
+          <strong className="metric-value">{pendingInvoices.length}</strong>
           <p className="metric-note">
             {pendingInvoices.length} invoices awaiting payment
           </p>
         </Card>
 
         <Card>
-          <span className="metric-label">Overdue Value</span>
-          <strong className="metric-value">
-            ${overdueRevenue.toLocaleString()}
-          </strong>
+          <span className="metric-label">Overdue Invoices</span>
+          <strong className="metric-value">{overdueInvoices.length}</strong>
           <p className="metric-note">
             {overdueInvoices.length} invoices past due date
           </p>
@@ -126,7 +100,7 @@ export default function AnalyticsPage() {
       <div className="analytics-main">
         <div className="analytics-chart">
           <RevenueChart
-            title="Invoice Revenue"
+            title="Invoice Counts"
             chartData={revenueChartData}
           />
         </div>
@@ -156,8 +130,8 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="status-row">
-                <span>Total Value</span>
-                <strong>${totalInvoiceValue.toLocaleString()}</strong>
+                <span>Total Invoices</span>
+                <strong>{invoices.length}</strong>
               </div>
             </div>
           )}
@@ -168,14 +142,14 @@ export default function AnalyticsPage() {
         <Card>
           <span className="metric-label">Total Credits</span>
           <strong className="metric-value">
-            ${totalCredits.toLocaleString()}
+            {formatNaira(totalCredits)}
           </strong>
         </Card>
 
         <Card>
           <span className="metric-label">Total Debits</span>
           <strong className="metric-value">
-            ${totalDebits.toLocaleString()}
+            {formatNaira(totalDebits)}
           </strong>
         </Card>
 
@@ -202,7 +176,7 @@ export default function AnalyticsPage() {
             {latestTransactions.map((transaction) => (
               <div key={transaction.id} className="analytics-transaction-row">
                 <span>{transaction.type}</span>
-                <strong>${Number(transaction.amount).toLocaleString()}</strong>
+                <strong>{formatNaira(Number(transaction.amount))}</strong>
               </div>
             ))}
           </div>

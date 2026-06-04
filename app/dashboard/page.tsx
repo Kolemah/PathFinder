@@ -9,7 +9,7 @@ import Card from "../components/card";
 import Button from "../components/button";
 import { useAppContext } from "../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
-import { formatNaira } from "@/lib/wallet";
+import { formatCurrency, formatNaira } from "@/lib/wallet";
 
 export default function Home() {
 const {
@@ -69,39 +69,32 @@ async function resendVerificationEmail() {
   });
 }
 
-const paidRevenue = invoices
-  .filter((invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Paid")
-  .reduce((total, invoice) => total + Number(invoice.amount), 0);
-
-const pendingRevenue = invoices
-  .filter((invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Pending")
-  .reduce((total, invoice) => total + Number(invoice.amount), 0);
-
-const overdueRevenue = invoices
-  .filter((invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Overdue")
-  .reduce((total, invoice) => total + Number(invoice.amount), 0);
-
-const totalInvoiceValue = invoices.reduce(
-  (total, invoice) => total + Number(invoice.amount),
-  0
+const paidInvoices = invoices.filter(
+  (invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Paid"
+);
+const pendingInvoices = invoices.filter(
+  (invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Pending"
+);
+const overdueInvoices = invoices.filter(
+  (invoice) => getInvoiceStatus(invoice.status, invoice.dueDate) === "Overdue"
 );
 
 const dashboardChartData = [
   {
     label: "Paid",
-    revenue: paidRevenue,
+    revenue: paidInvoices.length,
   },
   {
     label: "Pending",
-    revenue: pendingRevenue,
+    revenue: pendingInvoices.length,
   },
   {
     label: "Overdue",
-    revenue: overdueRevenue,
+    revenue: overdueInvoices.length,
   },
   {
     label: "Total",
-    revenue: totalInvoiceValue,
+    revenue: invoices.length,
   },
 ];
 
@@ -162,7 +155,7 @@ const dashboardChartData = [
 
       <div className="dashboard-chart">
         <RevenueChart
-          title="Invoice Revenue"
+          title="Invoice Counts"
           chartData={dashboardChartData}
         />
       </div>
@@ -303,7 +296,9 @@ const dashboardChartData = [
               </span>
             </div>
 
-            <strong>${Number(invoice.amount).toLocaleString()}</strong>
+            <strong>
+              {formatCurrency(Number(invoice.amount), invoice.currency)}
+            </strong>
 
             {displayStatus === "Pending" && (
               <Button

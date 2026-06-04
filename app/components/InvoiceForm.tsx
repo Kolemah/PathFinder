@@ -4,6 +4,11 @@ import { useState } from "react";
 import { Country, State } from "country-state-city";
 import { useAppContext } from "../context/AppContext";
 import Button from "./button";
+import {
+  DEFAULT_INVOICE_CURRENCY,
+  formatCurrency,
+  invoiceCurrencies,
+} from "@/lib/wallet";
 
 const countries = Country.getAllCountries();
 const requiredMark = <span className="required-mark">*</span>;
@@ -18,6 +23,7 @@ type Invoice = {
   zipcode: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   createdAt?: string;
   dueDate?: string;
@@ -38,6 +44,7 @@ export default function InvoiceForm({
   const [zipcode, setZipcode] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState(DEFAULT_INVOICE_CURRENCY);
   const [loading, setLoading] = useState(false);
 
   const selectedCountry = countries.find(
@@ -109,6 +116,7 @@ export default function InvoiceForm({
           zipcode,
           description,
           amount,
+          currency,
         }),
       });
 
@@ -129,6 +137,7 @@ export default function InvoiceForm({
         zipcode: data.invoice.customer.zipcode,
         description: data.invoice.description,
         amount: data.invoice.amount,
+        currency: data.invoice.currency,
         status: data.invoice.status,
         createdAt: data.invoice.createdAt,
         dueDate: data.invoice.dueDate,
@@ -142,6 +151,7 @@ export default function InvoiceForm({
       setZipcode("");
       setDescription("");
       setAmount("");
+      setCurrency(DEFAULT_INVOICE_CURRENCY);
 
       showToast("Invoice created successfully", "success");
     } catch (error) {
@@ -298,9 +308,25 @@ export default function InvoiceForm({
         </label>
 
         <label>
-          <span>Amount (USD) {requiredMark}</span>
+          <span>Currency {requiredMark}</span>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            style={inputStyle(darkMode)}
+            required
+          >
+            {invoiceCurrencies.map((currencyItem) => (
+              <option key={currencyItem.code} value={currencyItem.code}>
+                {currencyItem.name} ({currencyItem.code})
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>Amount ({currency}) {requiredMark}</span>
           <div className="amount-input-wrap">
-            <span>$</span>
+            <span>{formatCurrency(0, currency).replace(/[0-9.,\s]/g, "")}</span>
             <input
               placeholder="0.00"
               type="number"

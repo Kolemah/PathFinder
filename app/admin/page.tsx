@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import Card from "../components/card";
-import { formatNaira, formatUsd } from "@/lib/wallet";
+import { formatNaira } from "@/lib/wallet";
 
 type AdminUser = {
   id: string;
@@ -119,17 +119,17 @@ export default function AdminPage() {
             </Card>
 
             <Card>
-              <span className="metric-label">Pending USD</span>
+              <span className="metric-label">Pending Balance</span>
               <strong className="metric-value">
-                {formatUsd(summary?.pendingUsd || 0)}
+                {formatNaira(summary?.pendingUsd || 0)}
               </strong>
-              <p className="metric-note">Paid invoices still in 3-day hold.</p>
+              <p className="metric-note">Estimated NGN still in 3-day hold.</p>
             </Card>
 
             <Card>
               <span className="metric-label">Platform Fees</span>
               <strong className="metric-value">
-                {formatUsd(summary?.platformFeeUsd || 0)}
+                {formatNaira(summary?.platformFeeUsd || 0)}
               </strong>
               <p className="metric-note">Fees earned from paid invoices.</p>
             </Card>
@@ -176,7 +176,7 @@ export default function AdminPage() {
 
                     <div>
                       <span>Pending</span>
-                      <strong>{formatUsd(Number(user.pendingUsd))}</strong>
+                      <strong>{formatNaira(Number(user.pendingUsd))}</strong>
                     </div>
 
                     <div>

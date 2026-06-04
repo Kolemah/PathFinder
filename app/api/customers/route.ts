@@ -32,6 +32,7 @@ export async function GET(req: Request) {
             id: true,
             description: true,
             amount: true,
+            currency: true,
             status: true,
             dueDate: true,
             createdAt: true,

@@ -19,6 +19,7 @@ type Customer = {
     id: string;
     description: string;
     amount: number;
+    currency: string;
     status: string;
     dueDate: string;
   }[];
@@ -76,7 +77,7 @@ export default function CustomersPage() {
           (invoice) =>
             getInvoiceStatus(invoice.status, invoice.dueDate) === "Paid"
         )
-        .reduce((sum, invoice) => sum + Number(invoice.amount), 0)
+        .length
     );
   }, 0);
 
@@ -88,7 +89,7 @@ export default function CustomersPage() {
           (invoice) =>
             getInvoiceStatus(invoice.status, invoice.dueDate) === "Pending"
         )
-        .reduce((sum, invoice) => sum + Number(invoice.amount), 0)
+        .length
     );
   }, 0);
 
@@ -103,15 +104,13 @@ export default function CustomersPage() {
         </Card>
 
         <Card>
-          <span className="metric-label">Total Paid</span>
-          <strong className="metric-value">${totalPaid.toLocaleString()}</strong>
+          <span className="metric-label">Paid Invoices</span>
+          <strong className="metric-value">{totalPaid}</strong>
         </Card>
 
         <Card>
-          <span className="metric-label">Pending Value</span>
-          <strong className="metric-value">
-            ${totalPending.toLocaleString()}
-          </strong>
+          <span className="metric-label">Pending Invoices</span>
+          <strong className="metric-value">{totalPending}</strong>
         </Card>
       </div>
 
@@ -145,7 +144,7 @@ export default function CustomersPage() {
                 (invoice) =>
                   getInvoiceStatus(invoice.status, invoice.dueDate) === "Paid"
               )
-              .reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+              .length;
 
             const pending = customer.invoices
               .filter(
@@ -153,7 +152,7 @@ export default function CustomersPage() {
                   getInvoiceStatus(invoice.status, invoice.dueDate) ===
                   "Pending"
               )
-              .reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+              .length;
 
             const overdue = customer.invoices
               .filter(
@@ -161,7 +160,7 @@ export default function CustomersPage() {
                   getInvoiceStatus(invoice.status, invoice.dueDate) ===
                   "Overdue"
               )
-              .reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+              .length;
 
             return (
               <Card key={customer.id}>
@@ -186,17 +185,17 @@ export default function CustomersPage() {
                   <div className="customer-money-grid">
                     <div>
                       <span>Paid</span>
-                      <strong>${paid.toLocaleString()}</strong>
+                      <strong>{paid}</strong>
                     </div>
 
                     <div>
                       <span>Pending</span>
-                      <strong>${pending.toLocaleString()}</strong>
+                      <strong>{pending}</strong>
                     </div>
 
                     <div>
                       <span>Overdue</span>
-                      <strong>${overdue.toLocaleString()}</strong>
+                      <strong>{overdue}</strong>
                     </div>
                   </div>
 

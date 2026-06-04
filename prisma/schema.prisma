@@ -70,6 +70,7 @@ model Invoice {
   id               String    @id @default(cuid())
   description      String
   amount           Float
+  currency         String    @default("USD")
   status           String    @default("Pending")
   dueDate          DateTime  @default(now())
   paidAt           DateTime?

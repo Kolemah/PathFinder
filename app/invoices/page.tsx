@@ -19,6 +19,7 @@ import Button from "../components/button";
 import InvoiceForm from "../components/InvoiceForm";
 import { useAppContext } from "../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
+import { formatCurrency, invoiceCurrencies } from "@/lib/wallet";
 
 export default function InvoicesPage() {
   const {
@@ -65,12 +66,11 @@ export default function InvoicesPage() {
   const invoiceStats = invoices.reduce(
     (stats, invoice) => {
       const status = getInvoiceStatus(invoice.status, invoice.dueDate);
-      const amount = Number(invoice.amount);
 
       stats.total += 1;
 
       if (status === "Paid") {
-        stats.paid += amount;
+        stats.paid += 1;
       }
 
       if (status === "Pending") {
@@ -132,11 +132,8 @@ export default function InvoicesPage() {
     }).format(new Date(dueDate));
   }
 
-  function formatAmount(amount: number) {
-    return Number(amount).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  function formatInvoiceAmount(invoice: Pick<Invoice, "amount" | "currency">) {
+    return formatCurrency(Number(invoice.amount), invoice.currency || "USD");
   }
 
   function paymentLink(invoiceId: string | number) {
@@ -150,7 +147,7 @@ export default function InvoicesPage() {
       return [
         `Hello ${invoice.name},`,
         "",
-        `Your invoice for $${formatAmount(Number(invoice.amount))} has expired.`,
+        `Your invoice for ${formatInvoiceAmount(invoice)} has expired.`,
         `Due date was: ${formatDueDate(invoice.dueDate)}`,
         "",
         "Please contact me for an updated invoice.",
@@ -162,7 +159,7 @@ export default function InvoicesPage() {
     return [
       `Hello ${invoice.name},`,
       "",
-      `Your invoice for $${formatAmount(Number(invoice.amount))} is ready.`,
+      `Your invoice for ${formatInvoiceAmount(invoice)} is ready.`,
       `Due date: ${formatDueDate(invoice.dueDate)}`,
       `Status: ${displayStatus}`,
       "",
@@ -201,10 +198,7 @@ export default function InvoicesPage() {
         : displayStatus === "Overdue"
         ? { bg: [254, 226, 226], text: [153, 27, 27] }
         : { bg: [254, 243, 199], text: [146, 64, 14] };
-    const amount = Number(invoice.amount).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    const amount = formatInvoiceAmount(invoice);
     const descriptionLines = doc.splitTextToSize(invoice.description, 118);
     const fileName = invoice.name
       .replace(/[^a-z0-9]/gi, "-")
@@ -295,7 +289,7 @@ export default function InvoicesPage() {
     doc.setFontSize(11);
     doc.text(descriptionLines, margin + 6, 144);
     doc.setFont("helvetica", "bold");
-    doc.text(`$${amount}`, pageWidth - margin - 6, 144, { align: "right" });
+    doc.text(amount, pageWidth - margin - 6, 144, { align: "right" });
 
     const totalY = Math.max(168, 144 + descriptionLines.length * 6);
     doc.setDrawColor(226, 232, 240);
@@ -304,9 +298,11 @@ export default function InvoicesPage() {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
     doc.text("Subtotal", pageWidth - 78, totalY + 14);
-    doc.text(`$${amount}`, pageWidth - margin, totalY + 14, { align: "right" });
+    doc.text(amount, pageWidth - margin, totalY + 14, { align: "right" });
     doc.text("Tax", pageWidth - 78, totalY + 24);
-    doc.text("$0.00", pageWidth - margin, totalY + 24, { align: "right" });
+    doc.text(formatCurrency(0, invoice.currency), pageWidth - margin, totalY + 24, {
+      align: "right",
+    });
 
     if (invoice.paymentReference) {
       doc.setFontSize(9);
@@ -324,7 +320,7 @@ export default function InvoicesPage() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.text("TOTAL", pageWidth - 82, totalY + 43);
-    doc.text(`$${amount}`, pageWidth - 24, totalY + 43, { align: "right" });
+    doc.text(amount, pageWidth - 24, totalY + 43, { align: "right" });
 
     doc.setTextColor(100, 116, 139);
     doc.setFont("helvetica", "normal");
@@ -455,6 +451,22 @@ export default function InvoicesPage() {
           </label>
 
           <label>
+            Currency
+            <select
+              value={editInvoice.currency || "USD"}
+              onChange={(event) =>
+                updateEditField("currency", event.target.value)
+              }
+            >
+              {invoiceCurrencies.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.name} ({currency.code})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
             Amount
             <input
               type="number"
@@ -531,8 +543,8 @@ export default function InvoicesPage() {
 
         <div className="invoice-stat-card invoice-stat-paid">
           <DollarSign size={26} />
-          <span>Paid</span>
-          <strong>${formatAmount(invoiceStats.paid)}</strong>
+          <span>Paid invoices</span>
+          <strong>{invoiceStats.paid}</strong>
         </div>
 
         <div className="invoice-stat-card invoice-stat-pending">
@@ -620,7 +632,7 @@ export default function InvoicesPage() {
                             <span>{invoice.gmail}</span>
                           </td>
                           <td>{formatDueDate(invoice.createdAt)}</td>
-                          <td>${formatAmount(Number(invoice.amount))}</td>
+                          <td>{formatInvoiceAmount(invoice)}</td>
                           <td>
                             <span
                               className={`invoice-status ${
@@ -673,7 +685,7 @@ export default function InvoicesPage() {
                     <div className="invoice-mobile-meta">
                       <div>
                         <span>Amount</span>
-                        <strong>${formatAmount(Number(invoice.amount))}</strong>
+                        <strong>{formatInvoiceAmount(invoice)}</strong>
                       </div>
                       <div>
                         <span>Due date</span>

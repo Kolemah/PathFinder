@@ -56,7 +56,9 @@ function formatUser(user: NonNullable<Awaited<ReturnType<typeof loadUser>>>) {
     (invoice) => invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
   );
   const platformFeeUsd = paidInvoices.reduce(
-    (total, invoice) => total + Number(invoice.platformFeeUsd || 0),
+    (total, invoice) =>
+      total +
+      Number(invoice.platformFeeUsd || 0) * Number(invoice.exchangeRate || 1),
     0
   );
 
@@ -77,7 +79,10 @@ function formatUser(user: NonNullable<Awaited<ReturnType<typeof loadUser>>>) {
     stats: {
       invoiceCount: user.invoices.length,
       paidInvoiceCount: paidInvoices.length,
-      pendingUsd: sum(pendingInvoices),
+      pendingUsd: pendingInvoices.reduce(
+        (total, invoice) => total + Number(invoice.netAmountNgn || 0),
+        0
+      ),
       totalPaidUsd: sum(paidInvoices),
       platformFeeUsd,
       totalPayouts: sum(user.payouts),

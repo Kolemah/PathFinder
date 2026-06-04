@@ -8,9 +8,7 @@ import Button from "../components/button";
 import {
   PAYMENT_STATUS_PENDING_CLEARANCE,
   USD_TO_NGN_RATE,
-  calculateWalletAmounts,
   formatNaira,
-  formatUsd,
 } from "@/lib/wallet";
 
 export default function WalletPage() {
@@ -58,20 +56,8 @@ export default function WalletPage() {
       invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
   );
 
-  const pendingGrossUsd = pendingClearanceInvoices.reduce(
-    (total, invoice) => total + Number(invoice.amount),
-    0
-  );
-
   const pendingNetNgn = pendingClearanceInvoices.reduce((total, invoice) => {
-    const storedNet = Number(invoice.netAmountNgn || 0);
-    return (
-      total +
-      (storedNet > 0
-        ? storedNet
-        : calculateWalletAmounts(Number(invoice.amount), exchangeRate)
-            .netAmountNgn)
-    );
+    return total + Number(invoice.netAmountNgn || 0);
   }, 0);
 
   const totalPayouts = transactions
@@ -160,10 +146,6 @@ export default function WalletPage() {
   }
 
   function formatTransactionAmount(type: string, amount: number) {
-    if (type.toLowerCase().includes("pending")) {
-      return formatUsd(amount);
-    }
-
     return formatNaira(amount);
   }
 
@@ -210,9 +192,11 @@ export default function WalletPage() {
 
         <div className="wallet-stat-card wallet-stat-pending">
           <span>Pending Balance</span>
-          <strong>{formatUsd(pendingGrossUsd)}</strong>
-          <p>Paid invoices held for 3 days before release.</p>
-          <small>Expected after fee: {formatNaira(pendingNetNgn)}</small>
+          <strong>{formatNaira(pendingNetNgn)}</strong>
+          <p>Estimated naira value after conversion and 10% fee.</p>
+          <small>
+            {pendingClearanceInvoices.length} paid invoice(s) pending release.
+          </small>
         </div>
 
         <div className="wallet-stat-card wallet-stat-payouts">

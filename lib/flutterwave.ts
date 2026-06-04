@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getInvoiceStatus } from "@/lib/invoice-status";
-import { getUsdToNgnRate } from "@/lib/exchange-rate";
+import { getCurrencyToNgnRate } from "@/lib/exchange-rate";
 import {
+  DEFAULT_INVOICE_CURRENCY,
   PAYMENT_STATUS_PENDING_CLEARANCE,
   calculateWalletAmounts,
-  formatUsd,
+  formatCurrency,
   paymentAvailableAt,
 } from "@/lib/wallet";
 import { sendEmail } from "@/lib/email";
@@ -39,6 +40,7 @@ type PayableInvoice = {
   id: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   dueDate: Date;
   customer: {
@@ -101,7 +103,7 @@ export async function createFlutterwaveCheckout(invoice: PayableInvoice) {
     body: JSON.stringify({
       tx_ref: txRef,
       amount: Number(invoice.amount.toFixed(2)),
-      currency: "USD",
+      currency: invoice.currency || DEFAULT_INVOICE_CURRENCY,
       redirect_url: `${appUrl}/api/pay/${invoice.id}/verify`,
       customer: {
         email: invoice.customer.email,
@@ -206,16 +208,17 @@ export async function markInvoicePaidFromFlutterwave({
   }
 
   const expectedTxRef = invoice.paymentReference;
+  const invoiceCurrency = invoice.currency || DEFAULT_INVOICE_CURRENCY;
   const paidSuccessfully = payment.status === "successful";
   const amountMatches = Number(payment.amount) >= Number(invoice.amount);
-  const currencyMatches = payment.currency === "USD";
+  const currencyMatches = payment.currency === invoiceCurrency;
   const referenceMatches = expectedTxRef ? payment.tx_ref === expectedTxRef : true;
 
   if (!paidSuccessfully || !amountMatches || !currencyMatches || !referenceMatches) {
     throw new Error("Flutterwave payment could not be verified");
   }
 
-  const { rate } = await getUsdToNgnRate();
+  const { rate } = await getCurrencyToNgnRate(invoiceCurrency);
   const paidInvoice = await prisma.$transaction(async (tx) => {
     const paidAt = new Date();
     const walletAmounts = calculateWalletAmounts(invoice.amount, rate);
@@ -248,8 +251,8 @@ export async function markInvoicePaidFromFlutterwave({
     await tx.transaction.create({
       data: {
         userId: invoice.user.id,
-        type: "Payment Pending Clearance",
-        amount: invoice.amount,
+        type: "Payment Pending Clearance NGN Estimate",
+        amount: updatedInvoice.netAmountNgn,
       },
     });
 
@@ -262,7 +265,7 @@ export async function markInvoicePaidFromFlutterwave({
     html: invoicePaidTemplate({
       name: invoice.user.name,
       clientName: invoice.customer.name,
-      amount: formatUsd(invoice.amount),
+      amount: formatCurrency(invoice.amount, invoiceCurrency),
       invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invoices`,
       releaseDate: paidInvoice.paymentAvailableAt
         ? new Intl.DateTimeFormat("en", {

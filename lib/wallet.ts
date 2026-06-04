@@ -2,6 +2,28 @@ export const USD_TO_NGN_RATE = 1393.23;
 export const PLATFORM_FEE_RATE = 0.1;
 export const PAYMENT_HOLD_DAYS = 3;
 
+export const DEFAULT_INVOICE_CURRENCY = "USD";
+
+export const invoiceCurrencies = [
+  { code: "GBP", name: "British Pound Sterling" },
+  { code: "CAD", name: "Canadian Dollar" },
+  { code: "COP", name: "Colombian Peso" },
+  { code: "EGP", name: "Egyptian Pound" },
+  { code: "EUR", name: "Euro" },
+  { code: "KES", name: "Kenyan Shilling" },
+  { code: "NGN", name: "Nigerian Naira" },
+  { code: "ZAR", name: "South African Rand" },
+  { code: "USD", name: "United States Dollar" },
+] as const;
+
+export type InvoiceCurrency = (typeof invoiceCurrencies)[number]["code"];
+
+export function isSupportedInvoiceCurrency(
+  currency?: string | null
+): currency is InvoiceCurrency {
+  return invoiceCurrencies.some((item) => item.code === currency);
+}
+
 export const PAYMENT_STATUS_PENDING_CLEARANCE = "Pending Clearance";
 export const PAYMENT_STATUS_RELEASED = "Released";
 
@@ -12,10 +34,10 @@ export function paymentAvailableAt(paidAt: Date) {
 }
 
 export function calculateWalletAmounts(
-  amountUsd: number,
+  amount: number,
   exchangeRate = USD_TO_NGN_RATE
 ) {
-  const safeAmount = Number.isFinite(amountUsd) ? amountUsd : 0;
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
   const safeExchangeRate =
     Number.isFinite(exchangeRate) && exchangeRate > 0
       ? exchangeRate
@@ -42,9 +64,17 @@ export function formatNaira(amount: number) {
 }
 
 export function formatUsd(amount: number) {
+  return formatCurrency(amount, "USD");
+}
+
+export function formatCurrency(amount: number, currency = DEFAULT_INVOICE_CURRENCY) {
+  const safeCurrency = isSupportedInvoiceCurrency(currency)
+    ? currency
+    : DEFAULT_INVOICE_CURRENCY;
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: safeCurrency,
     maximumFractionDigits: 2,
   }).format(amount);
 }

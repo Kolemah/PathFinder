@@ -8,6 +8,7 @@ function invoiceResponse(invoice: {
   id: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   dueDate: Date;
   paidAt: Date | null;
@@ -39,6 +40,7 @@ function invoiceResponse(invoice: {
     id: invoice.id,
     description: invoice.description,
     amount: invoice.amount,
+    currency: invoice.currency,
     status: invoice.status,
     dueDate: invoice.dueDate,
     paidAt: invoice.paidAt,

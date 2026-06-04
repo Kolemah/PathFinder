@@ -7,12 +7,13 @@ import { ArrowLeft, CheckCircle, ShieldCheck } from "lucide-react";
 import PageHeader from "../../../components/PageHeader";
 import Card from "../../../components/card";
 import Button from "../../../components/button";
-import { formatNaira, formatUsd } from "@/lib/wallet";
+import { formatCurrency, formatNaira } from "@/lib/wallet";
 
 type AdminInvoice = {
   id: string;
   description: string;
   amount: number;
+  currency: string;
   status: string;
   paymentStatus: string;
   createdAt: string;
@@ -173,7 +174,7 @@ export default function AdminUserPage() {
             <Card>
               <span className="metric-label">Pending Balance</span>
               <strong className="metric-value">
-                {formatUsd(Number(user.stats.pendingUsd))}
+                {formatNaira(Number(user.stats.pendingUsd))}
               </strong>
               <p className="metric-note">Paid invoices still pending.</p>
             </Card>
@@ -189,7 +190,7 @@ export default function AdminUserPage() {
             <Card>
               <span className="metric-label">Platform Fee</span>
               <strong className="metric-value">
-                {formatUsd(Number(user.stats.platformFeeUsd))}
+                {formatNaira(Number(user.stats.platformFeeUsd))}
               </strong>
               <p className="metric-note">Fee earned from this user.</p>
             </Card>
@@ -302,7 +303,9 @@ export default function AdminUserPage() {
                         <span>{invoice.description}</span>
                       </div>
                       <div>
-                        <strong>{formatUsd(Number(invoice.amount))}</strong>
+                        <strong>
+                          {formatCurrency(Number(invoice.amount), invoice.currency)}
+                        </strong>
                         <span>
                           {invoice.status} / {invoice.paymentStatus}
                         </span>
