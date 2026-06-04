@@ -18,10 +18,28 @@ export const invoiceCurrencies = [
 
 export type InvoiceCurrency = (typeof invoiceCurrencies)[number]["code"];
 
+export const currencyInputPrefixes: Record<InvoiceCurrency, string> = {
+  GBP: "£",
+  CAD: "C$",
+  COP: "COL$",
+  EGP: "E£",
+  EUR: "€",
+  KES: "KSh",
+  NGN: "₦",
+  ZAR: "R",
+  USD: "$",
+};
+
 export function isSupportedInvoiceCurrency(
   currency?: string | null
 ): currency is InvoiceCurrency {
   return invoiceCurrencies.some((item) => item.code === currency);
+}
+
+export function currencyInputPrefix(currency = DEFAULT_INVOICE_CURRENCY) {
+  return isSupportedInvoiceCurrency(currency)
+    ? currencyInputPrefixes[currency]
+    : currencyInputPrefixes[DEFAULT_INVOICE_CURRENCY];
 }
 
 export const PAYMENT_STATUS_PENDING_CLEARANCE = "Pending Clearance";

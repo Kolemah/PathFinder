@@ -1995,10 +1995,12 @@ padding-bottom:92px;
   color: var(--muted);
   font-weight: 800;
   transform: translateY(-50%);
+  min-width: 34px;
+  text-align: left;
 }
 
 .amount-input-wrap input {
-  padding-left: 32px !important;
+  padding-left: 58px !important;
 }
 
 .invoice-create-description {

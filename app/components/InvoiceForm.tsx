@@ -6,7 +6,7 @@ import { useAppContext } from "../context/AppContext";
 import Button from "./button";
 import {
   DEFAULT_INVOICE_CURRENCY,
-  formatCurrency,
+  currencyInputPrefix,
   invoiceCurrencies,
 } from "@/lib/wallet";
 
@@ -326,7 +326,7 @@ export default function InvoiceForm({
         <label>
           <span>Amount ({currency}) {requiredMark}</span>
           <div className="amount-input-wrap">
-            <span>{formatCurrency(0, currency).replace(/[0-9.,\s]/g, "")}</span>
+            <span>{currencyInputPrefix(currency)}</span>
             <input
               placeholder="0.00"
               type="number"
