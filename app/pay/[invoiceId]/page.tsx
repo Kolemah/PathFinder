@@ -50,6 +50,21 @@ export default function PayInvoicePage() {
   const [invoice, setInvoice] = useState<PaymentInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [v4Open, setV4Open] = useState(false);
+  const [v4Paying, setV4Paying] = useState(false);
+  const [v4Card, setV4Card] = useState({
+    cardholderName: "",
+    cardNumber: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+    phoneNumber: "",
+  });
+  const [v4Authorization, setV4Authorization] = useState<{
+    chargeId: string;
+    type: string;
+  } | null>(null);
+  const [v4AuthorizationValue, setV4AuthorizationValue] = useState("");
   const paymentStatusHandled = useRef(false);
 
   useEffect(() => {
@@ -126,6 +141,126 @@ export default function PayInvoicePage() {
       showToast("Payment could not start. Please try again.", "error");
     } finally {
       setPaying(false);
+    }
+  }
+
+  function updateV4Card(field: keyof typeof v4Card, value: string) {
+    setV4Card((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function handleV4ChargeResponse(data: {
+    status?: string;
+    redirectUrl?: string;
+    chargeId?: string;
+    authorizationType?: string;
+    reference?: string;
+    instruction?: string;
+    message?: string;
+  }) {
+    if (data.status === "succeeded") {
+      window.location.href = `/api/pay/${params.invoiceId}/v4/verify`;
+      return;
+    }
+
+    if (data.status === "redirect" && data.redirectUrl) {
+      window.location.href = data.redirectUrl;
+      return;
+    }
+
+    if (
+      data.status === "requires_authorization" &&
+      data.chargeId &&
+      data.authorizationType
+    ) {
+      setV4Authorization({
+        chargeId: data.chargeId,
+        type: data.authorizationType,
+      });
+      setV4AuthorizationValue("");
+      showToast(`Flutterwave requires ${data.authorizationType.toUpperCase()}`, "info");
+      return;
+    }
+
+    if (data.status === "payment_instruction" && data.instruction) {
+      showToast(data.instruction, "info");
+      return;
+    }
+
+    showToast(data.message || "Payment is still pending", "info");
+  }
+
+  async function payWithV4Card() {
+    setV4Paying(true);
+
+    try {
+      const res = await fetch(`/api/pay/${params.invoiceId}/v4/card`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(v4Card),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.error || "V4 card payment failed", "error");
+        return;
+      }
+
+      handleV4ChargeResponse(data);
+    } catch (error) {
+      console.log("V4 CARD PAYMENT ERROR:", error);
+      showToast("V4 card payment could not start", "error");
+    } finally {
+      setV4Paying(false);
+    }
+  }
+
+  async function submitV4Authorization() {
+    if (!v4Authorization) return;
+
+    setV4Paying(true);
+
+    try {
+      const payload =
+        v4Authorization.type === "pin"
+          ? { type: "pin", pin: v4AuthorizationValue }
+          : v4Authorization.type === "otp"
+            ? { type: "otp", otp: v4AuthorizationValue }
+            : {
+                type: "avs",
+                city: invoice?.customer.state || "",
+                country: invoice?.customer.country || "",
+                line1: invoice?.customer.address || "",
+                postalCode: invoice?.customer.zipcode || "",
+                state: invoice?.customer.state || "",
+              };
+      const res = await fetch(`/api/pay/${params.invoiceId}/v4/authorize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chargeId: v4Authorization.chargeId,
+          ...payload,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.error || "Authorization failed", "error");
+        return;
+      }
+
+      handleV4ChargeResponse(data);
+    } catch (error) {
+      console.log("V4 AUTHORIZATION ERROR:", error);
+      showToast("Authorization could not be completed", "error");
+    } finally {
+      setV4Paying(false);
     }
   }
 
@@ -268,6 +403,141 @@ export default function PayInvoicePage() {
               ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
               : "You will be redirected to Flutterwave to complete this payment securely."}
           </p>
+
+          {!isPaid && !isExpired && (
+            <div className="payment-v4-card">
+              <button
+                type="button"
+                className="payment-v4-toggle"
+                onClick={() => setV4Open((current) => !current)}
+              >
+                {v4Open ? "Hide V4 card payment" : "Try Flutterwave V4 card payment"}
+              </button>
+
+              {v4Open && (
+                <div className="payment-v4-form">
+                  <p>
+                    Card details are sent securely to Flutterwave for this
+                    payment only. PathPayX does not save card details.
+                  </p>
+
+                  {!v4Authorization ? (
+                    <>
+                      <label>
+                        Cardholder name
+                        <input
+                          value={v4Card.cardholderName}
+                          onChange={(event) =>
+                            updateV4Card("cardholderName", event.target.value)
+                          }
+                          autoComplete="cc-name"
+                        />
+                      </label>
+
+                      <label>
+                        Card number
+                        <input
+                          value={v4Card.cardNumber}
+                          onChange={(event) =>
+                            updateV4Card("cardNumber", event.target.value)
+                          }
+                          inputMode="numeric"
+                          autoComplete="cc-number"
+                          placeholder="0000 0000 0000 0000"
+                        />
+                      </label>
+
+                      <div className="payment-v4-grid">
+                        <label>
+                          Month
+                          <input
+                            value={v4Card.expiryMonth}
+                            onChange={(event) =>
+                              updateV4Card("expiryMonth", event.target.value)
+                            }
+                            inputMode="numeric"
+                            autoComplete="cc-exp-month"
+                            placeholder="MM"
+                          />
+                        </label>
+
+                        <label>
+                          Year
+                          <input
+                            value={v4Card.expiryYear}
+                            onChange={(event) =>
+                              updateV4Card("expiryYear", event.target.value)
+                            }
+                            inputMode="numeric"
+                            autoComplete="cc-exp-year"
+                            placeholder="YYYY"
+                          />
+                        </label>
+
+                        <label>
+                          CVV
+                          <input
+                            value={v4Card.cvv}
+                            onChange={(event) =>
+                              updateV4Card("cvv", event.target.value)
+                            }
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
+                            placeholder="123"
+                          />
+                        </label>
+                      </div>
+
+                      <label>
+                        Phone number
+                        <input
+                          value={v4Card.phoneNumber}
+                          onChange={(event) =>
+                            updateV4Card("phoneNumber", event.target.value)
+                          }
+                          inputMode="tel"
+                          autoComplete="tel"
+                          placeholder="Optional"
+                        />
+                      </label>
+
+                      <Button onClick={payWithV4Card} disabled={v4Paying}>
+                        {v4Paying ? "Processing V4..." : "Pay with V4 card"}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="payment-v4-auth">
+                      <label>
+                        {v4Authorization.type === "otp"
+                          ? "Enter OTP"
+                          : v4Authorization.type === "avs"
+                            ? "Confirm billing address"
+                            : "Enter card PIN"}
+                        {v4Authorization.type === "avs" ? (
+                          <input
+                            value={`${invoice.customer.address}, ${invoice.customer.state}`}
+                            readOnly
+                          />
+                        ) : (
+                          <input
+                            value={v4AuthorizationValue}
+                            onChange={(event) =>
+                              setV4AuthorizationValue(event.target.value)
+                            }
+                            inputMode="numeric"
+                          />
+                        )}
+                      </label>
+
+                      <Button onClick={submitV4Authorization} disabled={v4Paying}>
+                        {v4Paying ? "Authorizing..." : "Continue payment"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </main>

@@ -2728,6 +2728,67 @@ padding-bottom:92px;
   margin: 14px 0 0;
 }
 
+.payment-v4-card {
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.payment-v4-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+}
+
+.payment-actions .payment-v4-toggle {
+  width: auto;
+}
+
+.payment-v4-form {
+  background: var(--soft-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.payment-v4-form label {
+  color: var(--muted);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 7px;
+  text-align: left;
+}
+
+.payment-v4-form input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.payment-v4-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.payment-v4-auth {
+  display: grid;
+  gap: 14px;
+}
+
 .invoice-empty {
   background: var(--surface);
   border: 1px solid var(--border);

@@ -11,6 +11,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { invoicePaidTemplate } from "@/lib/email-templates";
 import { getFlutterwaveV4Credentials } from "@/lib/flutterwave-v4";
+import { getFlutterwaveV4ChargeByReference } from "@/lib/flutterwave-v4";
 
 const FLUTTERWAVE_API_URL = "https://api.flutterwave.com/v3";
 
@@ -248,6 +249,117 @@ export async function markInvoicePaidFromFlutterwave({
         paymentReference: payment.flw_ref || payment.tx_ref,
         paymentStatus: PAYMENT_STATUS_PENDING_CLEARANCE,
         checkoutProvider: `Flutterwave #${payment.id}`,
+        ...walletAmounts,
+      },
+      include: {
+        customer: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        userId: invoice.user.id,
+        type: "Payment Pending Clearance NGN Estimate",
+        amount: updatedInvoice.netAmountNgn,
+      },
+    });
+
+    return updatedInvoice;
+  });
+
+  sendEmail({
+    to: invoice.user.email,
+    subject: "Invoice payment received",
+    html: invoicePaidTemplate({
+      name: invoice.user.name,
+      clientName: invoice.customer.name,
+      amount: formatCurrency(invoice.amount, invoiceCurrency),
+      invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invoices`,
+      releaseDate: paidInvoice.paymentAvailableAt
+        ? new Intl.DateTimeFormat("en", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }).format(paidInvoice.paymentAvailableAt)
+        : undefined,
+    }),
+  }).catch((error) => {
+    console.log("INVOICE PAID EMAIL ERROR:", error);
+  });
+
+  return paidInvoice;
+}
+
+export async function markInvoicePaidFromFlutterwaveV4({
+  invoiceId,
+  reference,
+}: {
+  invoiceId: string;
+  reference: string;
+}) {
+  const invoice = await prisma.invoice.findUnique({
+    where: {
+      id: invoiceId,
+    },
+    include: {
+      customer: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!invoice) {
+    throw new Error("Invoice not found");
+  }
+
+  if (invoice.status === "Paid") {
+    return invoice;
+  }
+
+  if (getInvoiceStatus(invoice.status, invoice.dueDate) === "Overdue") {
+    throw new Error("Invoice expired");
+  }
+
+  const expectedReference = invoice.paymentReference || reference;
+  const charge = await getFlutterwaveV4ChargeByReference(expectedReference);
+  const invoiceCurrency = invoice.currency || DEFAULT_INVOICE_CURRENCY;
+  const paidSuccessfully = charge.status === "succeeded";
+  const amountMatches = Number(charge.amount) >= Number(invoice.amount);
+  const currencyMatches = charge.currency === invoiceCurrency;
+  const referenceMatches = charge.reference === expectedReference;
+
+  if (!paidSuccessfully || !amountMatches || !currencyMatches || !referenceMatches) {
+    throw new Error("Flutterwave V4 payment could not be verified");
+  }
+
+  const { rate } = await getCurrencyToNgnRate(invoiceCurrency);
+  const paidInvoice = await prisma.$transaction(async (tx) => {
+    const paidAt = new Date();
+    const walletAmounts = calculateWalletAmounts(invoice.amount, rate);
+
+    const updatedInvoice = await tx.invoice.update({
+      where: {
+        id: invoice.id,
+      },
+      data: {
+        status: "Paid",
+        paidAt,
+        paymentAvailableAt: paymentAvailableAt(paidAt),
+        paymentMethod: charge.payment_method?.type || "Flutterwave V4 Card",
+        paymentReference: charge.reference,
+        paymentStatus: PAYMENT_STATUS_PENDING_CLEARANCE,
+        checkoutProvider: `Flutterwave V4 #${charge.id || charge.reference}`,
         ...walletAmounts,
       },
       include: {
