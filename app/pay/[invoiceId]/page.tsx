@@ -101,24 +101,32 @@ export default function PayInvoicePage() {
   async function payInvoice() {
     setPaying(true);
 
-    const res = await fetch(`/api/pay/${params.invoiceId}`, {
-      method: "POST",
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch(`/api/pay/${params.invoiceId}`, {
+        method: "POST",
+      });
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : {};
 
-    if (!res.ok) {
-      showToast(data.error || "Payment failed", "error");
+      if (!res.ok) {
+        showToast(data.error || "Payment failed. Please try again.", "error");
+        return;
+      }
+
+      if (!data.checkoutUrl) {
+        showToast("Checkout link was not created", "error");
+        return;
+      }
+
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      console.log("START PAYMENT ERROR:", error);
+      showToast("Payment could not start. Please try again.", "error");
+    } finally {
       setPaying(false);
-      return;
     }
-
-    if (!data.checkoutUrl) {
-      showToast("Checkout link was not created", "error");
-      setPaying(false);
-      return;
-    }
-
-    window.location.href = data.checkoutUrl;
   }
 
   function formatDate(date: string) {

@@ -134,11 +134,25 @@ export async function POST(
     );
   }
 
-  const checkout = await createFlutterwaveCheckout(invoice);
+  try {
+    const checkout = await createFlutterwaveCheckout(invoice);
 
-  return Response.json({
-    message: "Flutterwave checkout created",
-    checkoutUrl: checkout.checkoutUrl,
-    txRef: checkout.txRef,
-  });
+    return Response.json({
+      message: "Flutterwave checkout created",
+      checkoutUrl: checkout.checkoutUrl,
+      txRef: checkout.txRef,
+    });
+  } catch (error) {
+    console.log("CREATE FLUTTERWAVE CHECKOUT ERROR:", error);
+
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to start payment. Please try again.",
+      },
+      { status: 500 }
+    );
+  }
 }

@@ -100,6 +100,7 @@ export async function createFlutterwaveCheckout(invoice: PayableInvoice) {
       Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/json",
     },
+    signal: AbortSignal.timeout(20000),
     body: JSON.stringify({
       tx_ref: txRef,
       amount: Number(invoice.amount.toFixed(2)),
@@ -121,7 +122,10 @@ export async function createFlutterwaveCheckout(invoice: PayableInvoice) {
     }),
   });
 
-  const data = (await res.json()) as FlutterwaveCheckoutResponse;
+  const data = (await res.json().catch(() => ({
+    status: "error",
+    message: "Flutterwave returned an invalid checkout response",
+  }))) as FlutterwaveCheckoutResponse;
 
   if (!res.ok || data.status !== "success" || !data.data?.link) {
     throw new Error(data.message || "Failed to create Flutterwave checkout");
