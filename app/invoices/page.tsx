@@ -1,7 +1,7 @@
 "use client";
 
 import { jsPDF } from "jspdf";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -41,6 +41,36 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [createOpen, setCreateOpen] = useState(false);
+
+  useEffect(() => {
+    function closeInvoiceActionMenus() {
+      document
+        .querySelectorAll<HTMLDetailsElement>(".invoice-action-menu[open]")
+        .forEach((menu) => menu.removeAttribute("open"));
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Element | null;
+
+      if (target?.closest(".invoice-action-menu")) return;
+
+      closeInvoiceActionMenus();
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeInvoiceActionMenus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const filteredInvoices = invoices.filter((invoice) => {
     const displayStatus = getInvoiceStatus(invoice.status, invoice.dueDate);
