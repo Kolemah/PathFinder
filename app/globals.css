@@ -2796,6 +2796,20 @@ padding-bottom:92px;
   gap: 14px;
 }
 
+.payment-v4-help {
+  background: transparent;
+  border: 0;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0;
+  text-align: center;
+}
+
+.payment-actions .payment-v4-help {
+  width: auto;
+}
+
 .payment-v3-fallback {
   background: transparent;
   border: 0;

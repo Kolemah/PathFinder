@@ -217,6 +217,19 @@ export default function PayInvoicePage() {
     return ["otp", "pin", "avs"].includes(v4Authorization.type);
   }
 
+  function resetV4Authorization() {
+    setV4Authorization(null);
+    setV4AuthorizationValue("");
+  }
+
+  function handleMissingOtp() {
+    showToast(
+      "If no OTP arrived, your bank did not complete this card authorization. Try another card or payment method.",
+      "info"
+    );
+    resetV4Authorization();
+  }
+
   async function payWithV4Card() {
     if (!v4Card.phoneNumber.trim()) {
       showToast("Phone number is required for Flutterwave V4 card payment", "error");
@@ -574,16 +587,25 @@ export default function PayInvoicePage() {
                       </label>
 
                       {canSubmitV4Authorization() ? (
-                        <Button onClick={submitV4Authorization} disabled={v4Paying}>
-                          {v4Paying ? "Authorizing..." : "Continue payment"}
-                        </Button>
+                        <>
+                          <Button onClick={submitV4Authorization} disabled={v4Paying}>
+                            {v4Paying ? "Authorizing..." : "Continue payment"}
+                          </Button>
+
+                          {v4Authorization.type === "otp" && (
+                            <button
+                              type="button"
+                              className="payment-v4-help"
+                              onClick={handleMissingOtp}
+                            >
+                              I did not receive an OTP
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <Button
                           color="#64748b"
-                          onClick={() => {
-                            setV4Authorization(null);
-                            setV4AuthorizationValue("");
-                          }}
+                          onClick={resetV4Authorization}
                         >
                           Go back
                         </Button>
