@@ -2,8 +2,13 @@ import {
   authorizeFlutterwaveV4Charge,
   getFlutterwaveV4Charge,
 } from "@/lib/flutterwave-v4";
+import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ invoiceId: string }> }
+) {
+  const { invoiceId } = await params;
   const body = await req.json().catch(() => ({}));
   const chargeId = String(body.chargeId || "");
   const type = String(body.type || "");
@@ -78,6 +83,20 @@ export async function POST(req: Request) {
       try {
         const charge = await getFlutterwaveV4Charge(chargeId);
 
+        if (charge.status !== "succeeded") {
+          await prisma.invoice.update({
+            where: {
+              id: invoiceId,
+            },
+            data: {
+              paymentStatus: "Unpaid",
+              paymentReference: null,
+              paymentMethod: null,
+              checkoutProvider: null,
+            },
+          });
+        }
+
         return Response.json({
           ...charge,
           message:
@@ -88,6 +107,18 @@ export async function POST(req: Request) {
       } catch (statusError) {
         console.log("GET FINAL FLUTTERWAVE V4 CHARGE ERROR:", statusError);
       }
+
+      await prisma.invoice.update({
+        where: {
+          id: invoiceId,
+        },
+        data: {
+          paymentStatus: "Unpaid",
+          paymentReference: null,
+          paymentMethod: null,
+          checkoutProvider: null,
+        },
+      });
     }
 
     return Response.json(

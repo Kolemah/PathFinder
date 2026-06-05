@@ -8,6 +8,7 @@ import { useAppContext } from "../../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import {
   PAYMENT_STATUS_PENDING_CLEARANCE,
+  PAYMENT_STATUS_PROCESSING,
   formatCurrency,
   formatNaira,
 } from "@/lib/wallet";
@@ -357,6 +358,7 @@ export default function PayInvoicePage() {
   const displayStatus = getInvoiceStatus(invoice.status, invoice.dueDate);
   const isPaid = displayStatus === "Paid";
   const isExpired = displayStatus === "Overdue";
+  const isProcessing = invoice.paymentStatus === PAYMENT_STATUS_PROCESSING;
 
   return (
     <main className="payment-page">
@@ -450,12 +452,14 @@ export default function PayInvoicePage() {
         <div className="payment-actions">
           <Button
             onClick={() => setV4Open(true)}
-            disabled={isPaid || isExpired}
+            disabled={isPaid || isExpired || isProcessing}
           >
             {isPaid
               ? "Invoice Paid"
               : isExpired
               ? "Invoice Expired"
+              : isProcessing
+              ? "Payment Processing"
               : "Pay with card"}
           </Button>
           <p>
@@ -463,10 +467,12 @@ export default function PayInvoicePage() {
               ? "This invoice has passed its due date. Please contact the sender for a new invoice."
               : isPaid && invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
               ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
+              : isProcessing
+              ? "A payment attempt is already processing for this invoice. Please do not start another payment."
               : "Pay securely with Flutterwave V4 card payment."}
           </p>
 
-          {!isPaid && !isExpired && (
+          {!isPaid && !isExpired && !isProcessing && (
             <div className="payment-v4-card">
               <button
                 type="button"

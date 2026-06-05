@@ -12,6 +12,18 @@ export async function GET(
   const status = searchParams.get("status");
 
   if (status === "cancelled" || status === "failed") {
+    await prisma.invoice.update({
+      where: {
+        id: invoiceId,
+      },
+      data: {
+        paymentStatus: "Unpaid",
+        paymentReference: null,
+        paymentMethod: null,
+        checkoutProvider: null,
+      },
+    });
+
     return NextResponse.redirect(
       `${appUrl}/pay/${invoiceId}?payment=failed`
     );

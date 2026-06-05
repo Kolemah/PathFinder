@@ -43,6 +43,7 @@ export function currencyInputPrefix(currency = DEFAULT_INVOICE_CURRENCY) {
 }
 
 export const PAYMENT_STATUS_PENDING_CLEARANCE = "Pending Clearance";
+export const PAYMENT_STATUS_PROCESSING = "Processing";
 export const PAYMENT_STATUS_RELEASED = "Released";
 
 export function paymentAvailableAt(paidAt: Date) {
