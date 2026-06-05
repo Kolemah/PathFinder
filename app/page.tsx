@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowRight,
   BadgeCheck,
@@ -24,11 +23,11 @@ const workflow = [
   },
   {
     title: "Funds clear after 3 days",
-    copy: "PathPayX deducts the 10% platform fee and converts the payout to naira.",
+    copy: "PathPayX deducts the 10% platform fee and prepares the payout after buyer confirmation.",
   },
   {
-    title: "Withdraw in naira",
-    copy: "Verified sellers can request payout from their available naira balance.",
+    title: "Withdraw your payout",
+    copy: "Verified sellers can request payout from their available balance.",
   },
 ];
 
@@ -44,7 +43,7 @@ const features = [
     Icon: Clock3,
   },
   {
-    title: "Naira wallet",
+    title: "Seller wallet",
     copy: "Track cleared earnings, payouts, and transaction history in one wallet.",
     Icon: Wallet,
   },
@@ -63,19 +62,19 @@ export default function HomePage() {
       <main>
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <span className="landing-eyebrow">Built for Nigerian freelancers</span>
-            <h1>Invoice global clients. Withdraw in naira.</h1>
+            <span className="landing-eyebrow">Built for African freelancers</span>
+            <h1>Invoice global clients. Withdraw with confidence.</h1>
             <p>
               PathPayX helps freelancers send invoices, receive payments from
               clients worldwide, hold funds for buyer confirmation, and withdraw
-              cleared earnings into a naira wallet.
+              cleared earnings from one simple wallet.
             </p>
 
             <div className="landing-hero-pills" aria-label="PathPayX payment highlights">
               <span>Worldwide payments</span>
               <span>Multi-currency invoices</span>
               <span>3-day protection</span>
-              <span>NGN payouts</span>
+              <span>Seller payouts</span>
             </div>
 
             <div className="landing-hero-actions">
@@ -90,13 +89,32 @@ export default function HomePage() {
 
           <div className="landing-hero-image">
             <LandingRateCard />
-            <Image
-              src="/pathpayx-landing-hero.png"
-              alt="Nigerian freelancers using PathPayX to receive global payments and withdraw in naira"
-              width={1680}
-              height={945}
-              priority
-            />
+            <div className="landing-hero-visual" aria-label="PathPayX global payment preview">
+              <div className="landing-hero-panel landing-hero-panel-left">
+                <span>Invoice sent</span>
+                <strong>Client invoice</strong>
+                <p>Payment link ready</p>
+              </div>
+              <div className="landing-hero-people">
+                <div>
+                  <span>Global client</span>
+                  <strong>Payment received</strong>
+                </div>
+                <div>
+                  <span>Seller wallet</span>
+                  <strong>Funds pending</strong>
+                </div>
+              </div>
+              <div className="landing-hero-panel landing-hero-panel-right">
+                <span>Multi-currency</span>
+                <strong>Multiple currencies</strong>
+                <p>More supported currencies coming</p>
+              </div>
+              <div className="landing-hero-panel landing-hero-panel-bottom">
+                <span>Payout status</span>
+                <strong>Ready after confirmation</strong>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -107,11 +125,11 @@ export default function HomePage() {
           </div>
           <div>
             <strong>10%</strong>
-            <span>platform fee calculated before naira release</span>
+            <span>platform fee calculated before payout release</span>
           </div>
           <div>
-            <strong>₦10k</strong>
-            <span>minimum payout for verified sellers</span>
+            <strong>KYC</strong>
+            <span>verified sellers can request payouts</span>
           </div>
         </section>
 
@@ -120,22 +138,70 @@ export default function HomePage() {
             <span className="landing-eyebrow">Your money flow, visible</span>
             <h2>Track every invoice from payment link to payout.</h2>
             <p>
-              Keep clients, pending payments, cleared naira, KYC status, and payout
+              Keep clients, pending payments, cleared earnings, KYC status, and payout
               history in one calm dashboard.
             </p>
           </div>
-          <Image
-            src="/pathpayx-product-mockup.png"
-            alt="PathPayX dashboard and mobile wallet preview"
-            width={1680}
-            height={945}
-          />
+          <div className="landing-product-mockup" aria-label="PathPayX dashboard and mobile wallet preview">
+            <div className="landing-mockup-desktop">
+              <aside>
+                <strong>PathPayX</strong>
+                <span>Dashboard</span>
+                <span>Invoices</span>
+                <span>Clients</span>
+                <span>Transactions</span>
+                <span>Wallet</span>
+              </aside>
+              <div className="landing-mockup-main">
+                <div>
+                  <span>Welcome back,</span>
+                  <h3>John Adewumi</h3>
+                </div>
+                <div className="landing-mockup-stats">
+                  <article>
+                    <span>Invoice paid</span>
+                    <strong>24</strong>
+                  </article>
+                  <article>
+                    <span>Pending balance</span>
+                    <strong>$1,250.00</strong>
+                  </article>
+                  <article>
+                    <span>Available balance</span>
+                    <strong>Ready</strong>
+                  </article>
+                </div>
+                <div className="landing-mockup-table">
+                  <strong>Recent transactions</strong>
+                  <span>Invoice #INV-1003 paid</span>
+                  <span>Invoice #INV-1002 paid</span>
+                  <span>Payout requested</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="landing-mockup-phone">
+              <strong>PathPayX</strong>
+              <article>
+                <span>Invoice paid</span>
+                <b>24</b>
+              </article>
+              <article>
+                <span>Pending balance</span>
+                <b>$1,250.00</b>
+              </article>
+              <article>
+                <span>Available balance</span>
+                <b>Ready</b>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section id="how-it-works" className="landing-section">
           <div className="landing-section-heading">
             <span className="landing-eyebrow">How it works</span>
-            <h2>From invoice to naira payout</h2>
+            <h2>From invoice to payout</h2>
           </div>
 
           <div className="landing-workflow">
