@@ -8,7 +8,6 @@ import { useAppContext } from "../../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import {
   PAYMENT_STATUS_PENDING_CLEARANCE,
-  PAYMENT_STATUS_PROCESSING,
   formatCurrency,
   formatNaira,
 } from "@/lib/wallet";
@@ -51,23 +50,6 @@ export default function PayInvoicePage() {
   const [invoice, setInvoice] = useState<PaymentInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
-  const [v4Open, setV4Open] = useState(false);
-  const [v4Paying, setV4Paying] = useState(false);
-  const [v4Card, setV4Card] = useState({
-    cardholderName: "",
-    cardNumber: "",
-    expiryMonth: "",
-    expiryYear: "",
-    cvv: "",
-    phoneNumber: "",
-  });
-  const [v4Authorization, setV4Authorization] = useState<{
-    chargeId: string;
-    type: string;
-    actionType?: string;
-    instruction?: string;
-  } | null>(null);
-  const [v4AuthorizationValue, setV4AuthorizationValue] = useState("");
   const paymentStatusHandled = useRef(false);
 
   useEffect(() => {
@@ -147,185 +129,6 @@ export default function PayInvoicePage() {
     }
   }
 
-  function updateV4Card(field: keyof typeof v4Card, value: string) {
-    setV4Card((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  }
-
-  function handleV4ChargeResponse(data: {
-    status?: string;
-    redirectUrl?: string;
-    chargeId?: string;
-    authorizationType?: string;
-    actionType?: string;
-    reference?: string;
-    instruction?: string;
-    message?: string;
-  }) {
-    if (data.status === "succeeded") {
-      window.location.href = `/api/pay/${params.invoiceId}/v4/verify`;
-      return;
-    }
-
-    if (
-      data.status === "failed" ||
-      data.status === "cancelled" ||
-      data.status === "canceled" ||
-      data.status === "declined"
-    ) {
-      showToast(
-        data.message || "This payment attempt failed. Please start a new payment.",
-        "error"
-      );
-      resetV4Authorization();
-      return;
-    }
-
-    if (data.status === "redirect" && data.redirectUrl) {
-      window.location.href = data.redirectUrl;
-      return;
-    }
-
-    if (
-      data.status === "requires_authorization" &&
-      data.chargeId &&
-      data.authorizationType
-    ) {
-      setV4Authorization({
-        chargeId: data.chargeId,
-        type: data.authorizationType.toLowerCase(),
-        actionType: data.actionType,
-        instruction: data.instruction,
-      });
-      setV4AuthorizationValue("");
-      showToast(
-        data.instruction ||
-          `Flutterwave requires ${data.authorizationType.toUpperCase()}`,
-        "info"
-      );
-      return;
-    }
-
-    if (data.status === "payment_instruction" && data.instruction) {
-      showToast(data.instruction, "info");
-      return;
-    }
-
-    showToast(data.message || "Payment is still pending", "info");
-
-    if (data.message?.toLowerCase().includes("closed")) {
-      resetV4Authorization();
-    }
-  }
-
-  function v4AuthorizationTitle() {
-    if (!v4Authorization) return "";
-
-    if (v4Authorization.type === "otp") return "Enter OTP";
-    if (v4Authorization.type === "pin") return "Enter card PIN";
-    if (v4Authorization.type === "avs") return "Confirm billing address";
-
-    return "Flutterwave requires another authorization step";
-  }
-
-  function canSubmitV4Authorization() {
-    if (!v4Authorization) return false;
-
-    return ["otp", "pin", "avs"].includes(v4Authorization.type);
-  }
-
-  function resetV4Authorization() {
-    setV4Authorization(null);
-    setV4AuthorizationValue("");
-  }
-
-  function handleMissingOtp() {
-    showToast(
-      "If no OTP arrived, your bank did not complete this card authorization. Try another card or payment method.",
-      "info"
-    );
-    resetV4Authorization();
-  }
-
-  async function payWithV4Card() {
-    if (!v4Card.phoneNumber.trim()) {
-      showToast("Phone number is required for Flutterwave V4 card payment", "error");
-      return;
-    }
-
-    setV4Paying(true);
-
-    try {
-      const res = await fetch(`/api/pay/${params.invoiceId}/v4/card`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(v4Card),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast(data.error || "V4 card payment failed", "error");
-        return;
-      }
-
-      handleV4ChargeResponse(data);
-    } catch (error) {
-      console.log("V4 CARD PAYMENT ERROR:", error);
-      showToast("V4 card payment could not start", "error");
-    } finally {
-      setV4Paying(false);
-    }
-  }
-
-  async function submitV4Authorization() {
-    if (!v4Authorization) return;
-
-    setV4Paying(true);
-
-    try {
-      const payload =
-        v4Authorization.type === "pin"
-          ? { type: "pin", pin: v4AuthorizationValue }
-          : v4Authorization.type === "otp"
-            ? { type: "otp", otp: v4AuthorizationValue }
-            : {
-                type: "avs",
-                city: invoice?.customer.state || "",
-                country: invoice?.customer.country || "",
-                line1: invoice?.customer.address || "",
-                postalCode: invoice?.customer.zipcode || "",
-                state: invoice?.customer.state || "",
-              };
-      const res = await fetch(`/api/pay/${params.invoiceId}/v4/authorize`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chargeId: v4Authorization.chargeId,
-          ...payload,
-        }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast(data.error || "Authorization failed", "error");
-        return;
-      }
-
-      handleV4ChargeResponse(data);
-    } catch (error) {
-      console.log("V4 AUTHORIZATION ERROR:", error);
-      showToast("Authorization could not be completed", "error");
-    } finally {
-      setV4Paying(false);
-    }
-  }
-
   function formatDate(date: string) {
     return new Intl.DateTimeFormat("en", {
       month: "short",
@@ -358,7 +161,6 @@ export default function PayInvoicePage() {
   const displayStatus = getInvoiceStatus(invoice.status, invoice.dueDate);
   const isPaid = displayStatus === "Paid";
   const isExpired = displayStatus === "Overdue";
-  const isProcessing = invoice.paymentStatus === PAYMENT_STATUS_PROCESSING;
 
   return (
     <main className="payment-page">
@@ -450,196 +252,22 @@ export default function PayInvoicePage() {
         </div>
 
         <div className="payment-actions">
-          <Button
-            onClick={() => setV4Open(true)}
-            disabled={isPaid || isExpired || isProcessing}
-          >
+          <Button onClick={payInvoice} disabled={paying || isPaid || isExpired}>
             {isPaid
               ? "Invoice Paid"
               : isExpired
               ? "Invoice Expired"
-              : isProcessing
-              ? "Payment Processing"
-              : "Pay with card"}
+              : paying
+              ? "Processing..."
+              : "Pay Invoice"}
           </Button>
           <p>
             {isExpired
               ? "This invoice has passed its due date. Please contact the sender for a new invoice."
               : isPaid && invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
               ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
-              : isProcessing
-              ? "A payment attempt is already processing for this invoice. Please do not start another payment."
-              : "Pay securely with Flutterwave V4 card payment."}
+              : "You will be redirected to Flutterwave hosted checkout to complete this payment securely."}
           </p>
-
-          {!isPaid && !isExpired && !isProcessing && (
-            <div className="payment-v4-card">
-              <button
-                type="button"
-                className="payment-v4-toggle"
-                onClick={() => setV4Open((current) => !current)}
-              >
-                {v4Open ? "Hide card form" : "Enter card details"}
-              </button>
-
-              {v4Open && (
-                <div className="payment-v4-form">
-                  <p>
-                    Card details are sent securely to Flutterwave for this
-                    payment only. PathPayX does not save card details.
-                  </p>
-
-                  {!v4Authorization ? (
-                    <>
-                      <label>
-                        Cardholder name
-                        <input
-                          value={v4Card.cardholderName}
-                          onChange={(event) =>
-                            updateV4Card("cardholderName", event.target.value)
-                          }
-                          autoComplete="cc-name"
-                        />
-                      </label>
-
-                      <label>
-                        Card number
-                        <input
-                          value={v4Card.cardNumber}
-                          onChange={(event) =>
-                            updateV4Card("cardNumber", event.target.value)
-                          }
-                          inputMode="numeric"
-                          autoComplete="cc-number"
-                          placeholder="0000 0000 0000 0000"
-                        />
-                      </label>
-
-                      <div className="payment-v4-grid">
-                        <label>
-                          Month
-                          <input
-                            value={v4Card.expiryMonth}
-                            onChange={(event) =>
-                              updateV4Card("expiryMonth", event.target.value)
-                            }
-                            inputMode="numeric"
-                            autoComplete="cc-exp-month"
-                            placeholder="MM"
-                          />
-                        </label>
-
-                        <label>
-                          Year
-                          <input
-                            value={v4Card.expiryYear}
-                            onChange={(event) =>
-                              updateV4Card("expiryYear", event.target.value)
-                            }
-                            inputMode="numeric"
-                            autoComplete="cc-exp-year"
-                            placeholder="YY"
-                          />
-                        </label>
-
-                        <label>
-                          CVV
-                          <input
-                            value={v4Card.cvv}
-                            onChange={(event) =>
-                              updateV4Card("cvv", event.target.value)
-                            }
-                            inputMode="numeric"
-                            autoComplete="cc-csc"
-                            placeholder="123"
-                          />
-                        </label>
-                      </div>
-
-                      <label>
-                        Phone number
-                        <input
-                          value={v4Card.phoneNumber}
-                          onChange={(event) =>
-                            updateV4Card("phoneNumber", event.target.value)
-                          }
-                          inputMode="tel"
-                          autoComplete="tel"
-                          placeholder="08012345678"
-                        />
-                      </label>
-
-                      <Button onClick={payWithV4Card} disabled={v4Paying}>
-                        {v4Paying ? "Processing V4..." : "Pay with V4 card"}
-                      </Button>
-
-                      <button
-                        type="button"
-                        className="payment-v3-fallback"
-                        onClick={payInvoice}
-                        disabled={paying}
-                      >
-                        {paying ? "Starting hosted checkout..." : "Use old hosted checkout"}
-                      </button>
-                    </>
-                  ) : (
-                    <div className="payment-v4-auth">
-                      <label>
-                        {v4AuthorizationTitle()}
-                        {v4Authorization.instruction && (
-                          <small>{v4Authorization.instruction}</small>
-                        )}
-                        {v4Authorization.type === "avs" ? (
-                          <input
-                            value={`${invoice.customer.address}, ${invoice.customer.state}`}
-                            readOnly
-                          />
-                        ) : canSubmitV4Authorization() ? (
-                          <input
-                            value={v4AuthorizationValue}
-                            onChange={(event) =>
-                              setV4AuthorizationValue(event.target.value)
-                            }
-                            inputMode="numeric"
-                          />
-                        ) : (
-                          <input
-                            value={v4Authorization.actionType || v4Authorization.type}
-                            readOnly
-                          />
-                        )}
-                      </label>
-
-                      {canSubmitV4Authorization() ? (
-                        <>
-                          <Button onClick={submitV4Authorization} disabled={v4Paying}>
-                            {v4Paying ? "Authorizing..." : "Continue payment"}
-                          </Button>
-
-                          {v4Authorization.type === "otp" && (
-                            <button
-                              type="button"
-                              className="payment-v4-help"
-                              onClick={handleMissingOtp}
-                            >
-                              I did not receive an OTP
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <Button
-                          color="#64748b"
-                          onClick={resetV4Authorization}
-                        >
-                          Go back
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </main>
