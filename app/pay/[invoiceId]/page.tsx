@@ -63,6 +63,8 @@ export default function PayInvoicePage() {
   const [v4Authorization, setV4Authorization] = useState<{
     chargeId: string;
     type: string;
+    actionType?: string;
+    instruction?: string;
   } | null>(null);
   const [v4AuthorizationValue, setV4AuthorizationValue] = useState("");
   const paymentStatusHandled = useRef(false);
@@ -156,6 +158,7 @@ export default function PayInvoicePage() {
     redirectUrl?: string;
     chargeId?: string;
     authorizationType?: string;
+    actionType?: string;
     reference?: string;
     instruction?: string;
     message?: string;
@@ -177,10 +180,16 @@ export default function PayInvoicePage() {
     ) {
       setV4Authorization({
         chargeId: data.chargeId,
-        type: data.authorizationType,
+        type: data.authorizationType.toLowerCase(),
+        actionType: data.actionType,
+        instruction: data.instruction,
       });
       setV4AuthorizationValue("");
-      showToast(`Flutterwave requires ${data.authorizationType.toUpperCase()}`, "info");
+      showToast(
+        data.instruction ||
+          `Flutterwave requires ${data.authorizationType.toUpperCase()}`,
+        "info"
+      );
       return;
     }
 
@@ -190,6 +199,22 @@ export default function PayInvoicePage() {
     }
 
     showToast(data.message || "Payment is still pending", "info");
+  }
+
+  function v4AuthorizationTitle() {
+    if (!v4Authorization) return "";
+
+    if (v4Authorization.type === "otp") return "Enter OTP";
+    if (v4Authorization.type === "pin") return "Enter card PIN";
+    if (v4Authorization.type === "avs") return "Confirm billing address";
+
+    return "Flutterwave requires another authorization step";
+  }
+
+  function canSubmitV4Authorization() {
+    if (!v4Authorization) return false;
+
+    return ["otp", "pin", "avs"].includes(v4Authorization.type);
   }
 
   async function payWithV4Card() {
@@ -523,17 +548,16 @@ export default function PayInvoicePage() {
                   ) : (
                     <div className="payment-v4-auth">
                       <label>
-                        {v4Authorization.type === "otp"
-                          ? "Enter OTP"
-                          : v4Authorization.type === "avs"
-                            ? "Confirm billing address"
-                            : "Enter card PIN"}
+                        {v4AuthorizationTitle()}
+                        {v4Authorization.instruction && (
+                          <small>{v4Authorization.instruction}</small>
+                        )}
                         {v4Authorization.type === "avs" ? (
                           <input
                             value={`${invoice.customer.address}, ${invoice.customer.state}`}
                             readOnly
                           />
-                        ) : (
+                        ) : canSubmitV4Authorization() ? (
                           <input
                             value={v4AuthorizationValue}
                             onChange={(event) =>
@@ -541,12 +565,29 @@ export default function PayInvoicePage() {
                             }
                             inputMode="numeric"
                           />
+                        ) : (
+                          <input
+                            value={v4Authorization.actionType || v4Authorization.type}
+                            readOnly
+                          />
                         )}
                       </label>
 
-                      <Button onClick={submitV4Authorization} disabled={v4Paying}>
-                        {v4Paying ? "Authorizing..." : "Continue payment"}
-                      </Button>
+                      {canSubmitV4Authorization() ? (
+                        <Button onClick={submitV4Authorization} disabled={v4Paying}>
+                          {v4Paying ? "Authorizing..." : "Continue payment"}
+                        </Button>
+                      ) : (
+                        <Button
+                          color="#64748b"
+                          onClick={() => {
+                            setV4Authorization(null);
+                            setV4AuthorizationValue("");
+                          }}
+                        >
+                          Go back
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

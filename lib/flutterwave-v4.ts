@@ -50,6 +50,7 @@ type FlutterwaveV4ChargeResponse = {
       payment_instruction?: {
         note?: string;
       };
+      message?: string;
     };
   };
   error?: {
@@ -238,8 +239,13 @@ function normalizeExpiryYear(expiryYear: string) {
 function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
   const nextAction = data.data?.next_action;
   const redirectUrl = nextAction?.redirect_url?.url;
-  const authorizationType = nextAction?.authorization?.type;
+  const authorizationType = nextAction?.authorization?.type?.toLowerCase();
   const actionType = nextAction?.type;
+  const instruction =
+    nextAction?.payment_instruction?.note ||
+    nextAction?.message ||
+    data.message ||
+    "";
 
   if (data.data?.status === "succeeded") {
     return {
@@ -262,8 +268,10 @@ function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
     return {
       status: "requires_authorization",
       authorizationType: authorizationType || "pin",
+      actionType,
       chargeId: data.data?.id,
       reference: data.data?.reference,
+      instruction,
     };
   }
 
@@ -271,8 +279,10 @@ function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
     return {
       status: "requires_authorization",
       authorizationType: "otp",
+      actionType,
       chargeId: data.data?.id,
       reference: data.data?.reference,
+      instruction,
     };
   }
 
@@ -280,17 +290,20 @@ function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
     return {
       status: "requires_authorization",
       authorizationType: "avs",
+      actionType,
       chargeId: data.data?.id,
       reference: data.data?.reference,
+      instruction,
     };
   }
 
-  if (nextAction?.payment_instruction?.note) {
+  if (instruction) {
     return {
       status: "payment_instruction",
       chargeId: data.data?.id,
       reference: data.data?.reference,
-      instruction: nextAction.payment_instruction.note,
+      actionType,
+      instruction,
     };
   }
 
@@ -298,6 +311,7 @@ function normalizeChargeResponse(data: FlutterwaveV4ChargeResponse) {
     status: data.data?.status || data.status || "unknown",
     chargeId: data.data?.id,
     reference: data.data?.reference,
+    actionType,
     message: data.message,
   };
 }

@@ -2768,6 +2768,13 @@ padding-bottom:92px;
   text-align: left;
 }
 
+.payment-v4-form label small {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .payment-v4-form input {
   background: var(--surface);
   border: 1px solid var(--border);
