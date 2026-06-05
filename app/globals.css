@@ -2728,6 +2728,69 @@ padding-bottom:92px;
   margin: 14px 0 0;
 }
 
+.payment-confirmation-page {
+  background:
+    radial-gradient(circle at top, rgba(22, 163, 74, 0.12), transparent 32%),
+    linear-gradient(135deg, #f4faf7 0%, #eef6ff 100%);
+}
+
+.payment-confirmation-card {
+  max-width: 500px;
+  text-align: center;
+}
+
+.payment-confirmation-icon {
+  color: var(--success);
+  display: inline-grid;
+  margin-bottom: 18px;
+  place-items: center;
+}
+
+.payment-confirmation-card h1 {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.payment-confirmation-copy {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 auto 24px;
+  max-width: 360px;
+}
+
+.payment-confirmation-list {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 26px;
+  text-align: left;
+}
+
+.payment-confirmation-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.payment-confirmation-row span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.payment-confirmation-row strong {
+  color: var(--text);
+  text-align: right;
+}
+
+.payment-confirmation-id {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
+
+.payment-confirmation-actions button {
+  width: 100%;
+}
+
 .payment-v4-card {
   border-top: 1px solid var(--border);
   display: grid;

@@ -3,14 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { CheckCircle } from "lucide-react";
 import Button from "../../components/button";
 import { useAppContext } from "../../context/AppContext";
 import { getInvoiceStatus } from "@/lib/invoice-status";
-import {
-  PAYMENT_STATUS_PENDING_CLEARANCE,
-  formatCurrency,
-  formatNaira,
-} from "@/lib/wallet";
+import { formatCurrency } from "@/lib/wallet";
 
 type PaymentInvoice = {
   id: string;
@@ -162,6 +159,46 @@ export default function PayInvoicePage() {
   const isPaid = displayStatus === "Paid";
   const isExpired = displayStatus === "Overdue";
 
+  if (isPaid) {
+    return (
+      <main className="payment-page payment-confirmation-page">
+        <div className="payment-card payment-confirmation-card">
+          <div className="payment-confirmation-icon" aria-hidden="true">
+            <CheckCircle size={72} strokeWidth={2.4} />
+          </div>
+
+          <h1>Payment Confirmed!</h1>
+          <p className="payment-confirmation-copy">
+            Your payment has been received and recorded for this invoice.
+          </p>
+
+          <div className="payment-confirmation-list">
+            <div className="payment-confirmation-row">
+              <span>Amount</span>
+              <strong>{formatCurrency(Number(invoice.amount), invoice.currency)}</strong>
+            </div>
+
+            <div className="payment-confirmation-row">
+              <span>Date</span>
+              <strong>{formatDate(invoice.paidAt || new Date().toISOString())}</strong>
+            </div>
+
+            <div className="payment-confirmation-row">
+              <span>Transaction ID</span>
+              <strong className="payment-confirmation-id">
+                {invoice.paymentReference || "Payment received"}
+              </strong>
+            </div>
+          </div>
+
+          <div className="payment-confirmation-actions">
+            <Button onClick={() => (window.location.href = "/")}>Done</Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="payment-page">
       <div className="payment-card">
@@ -169,9 +206,7 @@ export default function PayInvoicePage() {
           <Image src="/logo-pathpayx-brand.png" alt="PathPayX" width={150} height={56} />
           <span
             className={
-              isPaid
-                ? "payment-paid"
-                : displayStatus === "Overdue"
+              displayStatus === "Overdue"
                 ? "payment-overdue"
                 : "payment-pending"
             }
@@ -201,45 +236,6 @@ export default function PayInvoicePage() {
             <strong>{formatDate(invoice.dueDate)}</strong>
           </div>
 
-          {isPaid && invoice.paidAt && (
-            <div>
-              <span>Paid At</span>
-              <strong>{formatDate(invoice.paidAt)}</strong>
-              <p>{invoice.paymentMethod || "Payment received"}</p>
-            </div>
-          )}
-
-          {isPaid && invoice.paymentReference && (
-            <div>
-              <span>Payment Reference</span>
-              <strong>{invoice.paymentReference}</strong>
-              <p>{invoice.checkoutProvider || invoice.paymentStatus}</p>
-            </div>
-          )}
-
-          {isPaid && (
-            <div>
-              <span>Seller Receives</span>
-              <strong>{formatNaira(Number(invoice.netAmountNgn || 0))}</strong>
-              <p>
-                {formatCurrency(
-                  Number(invoice.platformFeeUsd || 0),
-                  invoice.currency
-                )} platform fee
-              </p>
-            </div>
-          )}
-
-          {isPaid &&
-            invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE &&
-            invoice.paymentAvailableAt && (
-              <div>
-                <span>Wallet Release</span>
-                <strong>{formatDate(invoice.paymentAvailableAt)}</strong>
-                <p>Held for 3 days for buyer confirmation</p>
-              </div>
-            )}
-
           <div>
             <span>Location</span>
             <strong>
@@ -264,8 +260,6 @@ export default function PayInvoicePage() {
           <p>
             {isExpired
               ? "This invoice has passed its due date. Please contact the sender for a new invoice."
-              : isPaid && invoice.paymentStatus === PAYMENT_STATUS_PENDING_CLEARANCE
-              ? "Payment has been received. The seller's naira balance will update after the 3-day confirmation hold."
               : "You will be redirected to Flutterwave hosted checkout to complete this payment securely."}
           </p>
         </div>
