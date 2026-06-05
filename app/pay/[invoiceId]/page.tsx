@@ -168,6 +168,20 @@ export default function PayInvoicePage() {
       return;
     }
 
+    if (
+      data.status === "failed" ||
+      data.status === "cancelled" ||
+      data.status === "canceled" ||
+      data.status === "declined"
+    ) {
+      showToast(
+        data.message || "This payment attempt failed. Please start a new payment.",
+        "error"
+      );
+      resetV4Authorization();
+      return;
+    }
+
     if (data.status === "redirect" && data.redirectUrl) {
       window.location.href = data.redirectUrl;
       return;
@@ -199,6 +213,10 @@ export default function PayInvoicePage() {
     }
 
     showToast(data.message || "Payment is still pending", "info");
+
+    if (data.message?.toLowerCase().includes("closed")) {
+      resetV4Authorization();
+    }
   }
 
   function v4AuthorizationTitle() {

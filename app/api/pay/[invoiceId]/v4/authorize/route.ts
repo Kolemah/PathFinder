@@ -1,4 +1,7 @@
-import { authorizeFlutterwaveV4Charge } from "@/lib/flutterwave-v4";
+import {
+  authorizeFlutterwaveV4Charge,
+  getFlutterwaveV4Charge,
+} from "@/lib/flutterwave-v4";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -68,13 +71,28 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.log("AUTHORIZE FLUTTERWAVE V4 CHARGE ERROR:", error);
+    const message =
+      error instanceof Error ? error.message : "Flutterwave V4 authorization failed";
+
+    if (message.toLowerCase().includes("final status")) {
+      try {
+        const charge = await getFlutterwaveV4Charge(chargeId);
+
+        return Response.json({
+          ...charge,
+          message:
+            charge.status === "succeeded"
+              ? "Payment already completed"
+              : "This payment attempt is already closed. Please start a new payment.",
+        });
+      } catch (statusError) {
+        console.log("GET FINAL FLUTTERWAVE V4 CHARGE ERROR:", statusError);
+      }
+    }
 
     return Response.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Flutterwave V4 authorization failed",
+        error: message,
       },
       { status: 500 }
     );

@@ -461,6 +461,14 @@ export async function authorizeFlutterwaveV4Charge({
   return normalizeChargeResponse(data);
 }
 
+export async function getFlutterwaveV4Charge(chargeId: string) {
+  const data = await flutterwaveV4Fetch(`/charges/${chargeId}`, {
+    method: "GET",
+  });
+
+  return normalizeChargeResponse(data);
+}
+
 export async function getFlutterwaveV4ChargeByReference(reference: string) {
   const token = await getFlutterwaveV4AccessToken();
   const url = new URL(`${getFlutterwaveV4BaseUrl()}/charges`);
