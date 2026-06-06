@@ -267,6 +267,16 @@ export default function HomePage() {
             Get started <ArrowRight size={18} />
           </Link>
         </section>
+
+        <footer className="landing-footer">
+          <span>PathPayX</span>
+          <nav aria-label="PathPayX policy links">
+            <Link href="/policies/terms">Terms</Link>
+            <Link href="/policies/privacy">Privacy</Link>
+            <Link href="/policies/refunds">Refunds</Link>
+            <Link href="/policies/kyc-aml">KYC & AML</Link>
+          </nav>
+        </footer>
       </main>
     </div>
   );
