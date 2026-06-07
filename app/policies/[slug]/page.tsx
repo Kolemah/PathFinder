@@ -53,13 +53,6 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
             <p>{policy.summary}</p>
           </header>
 
-          <div className="policy-disclaimer">
-            These policies are written for product clarity and platform
-            readiness. They should be reviewed by a qualified legal professional
-            before PathPayX handles large transaction volume or regulated
-            financial activity.
-          </div>
-
           {policy.sections.map((section) => (
             <section key={section.title}>
               <h2>{section.title}</h2>
