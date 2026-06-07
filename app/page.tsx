@@ -62,7 +62,7 @@ export default function HomePage() {
       <main>
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <span className="landing-eyebrow">Built for African freelancers</span>
+            <span className="landing-eyebrow">Built for all freelancers</span>
             <h1>Invoice global clients. Withdraw with confidence.</h1>
             <p>
               PathPayX helps freelancers send invoices, receive payments from
