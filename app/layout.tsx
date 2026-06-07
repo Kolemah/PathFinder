@@ -22,6 +22,7 @@ export default function RootLayout({
     pathname === "/register" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
+    pathname.startsWith("/policies") ||
     pathname.startsWith("/pay/");
 
   return (
